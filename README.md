@@ -1,5 +1,7 @@
 # LaunchingView
 
+This is a SwiftUI view based on The [The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture).
+
 ![Badge](https://img.shields.io/badge/swift-white.svg?style=flat-square&logo=Swift)
 ![Badge](https://img.shields.io/badge/SwiftUI-001b87.svg?style=flat-square&logo=Swift&logoColor=black)
 ![Badge - Version](https://img.shields.io/badge/Version-0.5.1-1177AA?style=flat-square)
@@ -35,7 +37,8 @@ struct YourApp: App {
 }
 ```
 
-## Dependency AppVersionService
+## Dependency 
+[AppVersionService](https://github.com/swift-man/AppVersionService) calls api using [FirebaseRemoteConfig](https://github.com/firebase/firebase-ios-sdk).
 
 ```swift
 import Dependencies
