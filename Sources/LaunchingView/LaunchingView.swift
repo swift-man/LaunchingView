@@ -8,20 +8,20 @@
 import ComposableArchitecture
 import SwiftUI
 
-public struct LaunchingView<Content: View, LaungchScreen: View>: View {
+public struct LaunchingView<Content: View, LaunchScreen: View>: View {
   let store: StoreOf<Launching>
   
   @State
   var onLaunching: Bool = false
   
   let contentView: () -> Content
-  let laungchScreen: () -> LaungchScreen
+  let launchScreen: () -> LaunchScreen
   
   public init(store: StoreOf<Launching>,
        @ViewBuilder contentView: @escaping () -> Content,
-       @ViewBuilder laungchScreen: @escaping () -> LaungchScreen) {
+       @ViewBuilder launchScreen: @escaping () -> LaunchScreen) {
     self.contentView = contentView
-    self.laungchScreen = laungchScreen
+    self.launchScreen = launchScreen
     self.store = store
   }
   
@@ -30,7 +30,7 @@ public struct LaunchingView<Content: View, LaungchScreen: View>: View {
       if onLaunching {
         contentView()
       } else {
-        laungchScreen()
+        launchScreen()
           .onAppear {
             viewStore.send(.fetchAppVersion)
           }
