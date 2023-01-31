@@ -17,6 +17,10 @@ public struct Launching: ReducerProtocol {
     var forceUpdateAlert: AlertState<Action>?
     var isSuccess: Bool = false
     var optionalUpdateConfirm: ConfirmationDialogState<Action>?
+    
+    public init() {
+      
+    }
   }
   
   public enum Action: Equatable {
