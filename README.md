@@ -38,7 +38,7 @@ struct YourApp: App {
 ```
 
 ## Dependency 
-[AppVersionService](https://github.com/swift-man/LaunchingService) calls api using [FirebaseRemoteConfig](https://github.com/firebase/firebase-ios-sdk).
+[LaunchingService](https://github.com/swift-man/LaunchingService) calls api using [FirebaseRemoteConfig](https://github.com/firebase/firebase-ios-sdk).
 
 ```swift
 import Dependencies
