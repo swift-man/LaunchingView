@@ -120,7 +120,7 @@ public struct Launching: ReducerProtocol {
       
     case .appUpdateFetchErrorAlertDismissed:
       state.appUpdateFetchErrorAlert = nil
-      return .none
+      return .send(.fetchAppUpdateState)
     }
   }
 }
