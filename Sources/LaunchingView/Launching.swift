@@ -5,70 +5,64 @@
 //  Created by SwiftMan on 2023/01/31.
 //
 
-import AppVersionService
+import LaunchingService
 import ComposableArchitecture
 import SwiftUI
 
 public struct Launching: ReducerProtocol {
   // MARK: - Enums
   public struct State: Equatable {
-    var appVersionState: ResultAppVersion?
-    var fetchErrorAlert: AlertState<Action>?
+    var appUpdateState: AppUpdateStatus?
+    var appUpdateFetchErrorAlert: AlertState<Action>?
     var forceUpdateAlert: AlertState<Action>?
-    var isSuccess: Bool = false
+    var isValid = false
     var optionalUpdateConfirm: ConfirmationDialogState<Action>?
+    let optionalUpdateDoneText: TextState
     
-    public init() {
-      
+    public init(optionalUpdateDoneText: TextState = TextState("Update")) {
+      self.optionalUpdateDoneText = optionalUpdateDoneText
     }
   }
   
   public enum Action: Equatable {
-    case fetchAppVersion
-    case fetchErrorAlertDismissed
-    case fetchedAppVersionState(ResultAppVersion)
+    case fetchAppUpdateState
+    case appUpdateFetchErrorAlertDismissed
+    case setAppUpdateState(AppUpdateStatus)
     case forceUpdateAlertDismissed
     case optionalUpdateConfirmDismissed
     case optionalUpdateConfirmTapped(appStoreURL: URL?)
     case showFetchErrorAlert(errorMessage: String)
   }
   
-  let appVersionInteractor: AppVersionInteractable
+  let launchingInteractor: LaunchingInteractable
   
-  public init(appVersionInteractor: AppVersionInteractable) {
-    self.appVersionInteractor = appVersionInteractor
+  public init(launchingInteractor: LaunchingInteractable) {
+    self.launchingInteractor = launchingInteractor
   }
   
   public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
     switch action {
-    case .fetchAppVersion:
+    case .fetchAppUpdateState:
       return .task {
         do {
-          let state = try await appVersionInteractor.fetchAppVersion()
-          return .fetchedAppVersionState(state)
+          let state = try await launchingInteractor.fetchLaunchingConfig()
+          return .setAppUpdateState(state)
         } catch {
           return .showFetchErrorAlert(errorMessage: error.localizedDescription)
         }
       }
     case .forceUpdateAlertDismissed:
-      guard let appVersionState = state.appVersionState else { return .none }
+      guard let appUpdateState = state.appUpdateState else { return .none }
       
-      switch appVersionState {
-      case .success:
+      switch appUpdateState {
+      case .valid, .optionalUpdateRequired:
         return .none
       case .forcedUpdateRequired(message: _, appstoreURL: let appstoreURL):
-#if os(iOS)
-        UIApplication.shared.open(appstoreURL)
-#else
-        NSWorkspace.shared.open(appstoreURL)
-#endif
+        SharedURL.shared.open(appstoreURL)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
           exit(0)
         })
-        return .none
-        
-      case .optionalUpdateRequired:
         return .none
       }
       
@@ -77,28 +71,22 @@ public struct Launching: ReducerProtocol {
       return .none
       
     case .optionalUpdateConfirmTapped:
-      guard let appVersionState = state.appVersionState else { return .none }
+      guard let appUpdateState = state.appUpdateState else { return .none }
       
-      switch appVersionState {
-      case .success:
-        return .none
-      case .forcedUpdateRequired:
+      switch appUpdateState {
+      case .valid, .forcedUpdateRequired:
         return .none
       case .optionalUpdateRequired(message: _, appstoreURL: let appstoreURL):
-#if os(iOS)
-        UIApplication.shared.open(appstoreURL)
-#else
-        NSWorkspace.shared.open(appstoreURL)
-#endif
+        SharedURL.shared.open(appstoreURL)
         return .none
       }
       
-    case .fetchedAppVersionState(let appVersionState):
-      state.appVersionState = appVersionState
+    case .setAppUpdateState(let appVersionState):
+      state.appUpdateState = appVersionState
       
       switch appVersionState {
-      case .success:
-        state.isSuccess = true
+      case .valid:
+        state.isValid = true
         return .none
         
       case .forcedUpdateRequired(message: let message, appstoreURL: _):
@@ -110,28 +98,28 @@ public struct Launching: ReducerProtocol {
         return .none
         
       case .optionalUpdateRequired(message: let message, appstoreURL: let appstoreURL):
-        state.isSuccess = true
+        state.isValid = true
         state.optionalUpdateConfirm = ConfirmationDialogState(title: {
           TextState(Bundle.main.displayName)
         }, actions: {
-            .default(TextState("Update"), action: .send(.optionalUpdateConfirmTapped(appStoreURL: appstoreURL)))
+          .default(state.optionalUpdateDoneText, action: .send(.optionalUpdateConfirmTapped(appStoreURL: appstoreURL)))
         }, message: {
           TextState(message)
         })
-      
+        
         return .none
       }
       
     case .showFetchErrorAlert(errorMessage: let errorMessage):
-      state.fetchErrorAlert = AlertState {
+      state.appUpdateFetchErrorAlert = AlertState {
         TextState(Bundle.main.displayName)
       } message: {
         TextState(errorMessage)
       }
       return .none
       
-    case .fetchErrorAlertDismissed:
-      state.fetchErrorAlert = nil
+    case .appUpdateFetchErrorAlertDismissed:
+      state.appUpdateFetchErrorAlert = nil
       return .none
     }
   }
