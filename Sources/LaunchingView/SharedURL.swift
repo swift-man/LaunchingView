@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+/// Open URL macOS and iOS
 public struct SharedURL {
   public static let shared = SharedURL()
   private init() {}

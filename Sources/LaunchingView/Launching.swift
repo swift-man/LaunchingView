@@ -9,6 +9,7 @@ import LaunchingService
 import ComposableArchitecture
 import SwiftUI
 
+/// Launching은 App 구동을 위한 Request 를 포함한 AppUpdate 상태를 관리합니다.
 public struct Launching: ReducerProtocol {
   // MARK: - Enums
   public struct State: Equatable {
@@ -19,23 +20,43 @@ public struct Launching: ReducerProtocol {
     var optionalUpdateConfirm: ConfirmationDialogState<Action>?
     let optionalUpdateDoneText: TextState
     
+    /// Launching.State 생성
+    /// - Parameter optionalUpdateDoneText: 선택 업데이트 Alert 에서 `업데이트` 버튼의 Title을 변경합니다.
     public init(optionalUpdateDoneText: TextState = TextState("Update")) {
       self.optionalUpdateDoneText = optionalUpdateDoneText
     }
   }
   
   public enum Action: Equatable {
+    
+    /// AppUpdateState 를 Firebase.RemoteConfig 를 통해 가져옵니다.
     case fetchAppUpdateState
+    
+    /// Action.fetchAppUpdateState 실패 후 Error 얼럿 Dismissed 시 호출되며
+    /// Action.fetchAppUpdateState 가 다시 호출 됩니다.
     case appUpdateFetchErrorAlertDismissed
+    
+    /// Action.fetchAppUpdateState 를 통해 AppUpdateStatus 를 세팅합니다.
     case setAppUpdateState(AppUpdateStatus)
+    
+    /// 강제 업데이트 얼럿 Dismissed 시 호출
     case forceUpdateAlertDismissed
+    
+    /// 선택 업데이트 얼럿 Dismissed 시 호출
     case optionalUpdateConfirmDismissed
+    
+    /// 선택 업데이트 얼럿의 `업데이트`를 유저가 선택 시 호출
     case optionalUpdateConfirmTapped(appStoreURL: URL?)
+    
+    /// Action.fetchAppUpdateState 실패하면 Error Alert를 호출
     case showFetchErrorAlert(errorMessage: String)
   }
   
-  let launchingInteractor: LaunchingInteractable
+  private let launchingInteractor: LaunchingInteractable
   
+  /// make instance
+  /// - Parameters
+  ///   - launchingInteractor: `LaunchingService` instance
   public init(launchingInteractor: LaunchingInteractable) {
     self.launchingInteractor = launchingInteractor
   }
