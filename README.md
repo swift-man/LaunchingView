@@ -4,7 +4,7 @@ This is a SwiftUI view based on The [The Composable Architecture](https://github
 
 ![Badge](https://img.shields.io/badge/swift-white.svg?style=flat-square&logo=Swift)
 ![Badge](https://img.shields.io/badge/SwiftUI-001b87.svg?style=flat-square&logo=Swift&logoColor=black)
-![Badge - Version](https://img.shields.io/badge/Version-0.5.1-1177AA?style=flat-square)
+![Badge - Version](https://img.shields.io/badge/Version-0.6.0-1177AA?style=flat-square)
 ![Badge - Swift Package Manager](https://img.shields.io/badge/SPM-compatible-orange?style=flat-square)
 ![Badge - Platform](https://img.shields.io/badge/platform-mac_12|ios_15-yellow?style=flat-square)
 ![Badge - License](https://img.shields.io/badge/license-MIT-black?style=flat-square)  
@@ -17,14 +17,14 @@ import LaunchingView
 
 @main
 struct YourApp: App {
-  @Dependency(\.appVersionService) var appVersionService
+  @Dependency(\.launchingService) var launchingService
   
   var body: some Scene {
     WindowGroup {
       LaunchingView<ContentView, LaunchScreenView>(
         store: Store(
           initialState: Launching.State(),
-          reducer: Launching(appVersionInteractor: appVersionService)
+          reducer: Launching(launchingInteractor: launchingService)
         ),
         contentView: {
           ContentView()
@@ -38,20 +38,20 @@ struct YourApp: App {
 ```
 
 ## Dependency 
-[AppVersionService](https://github.com/swift-man/AppVersionService) calls api using [FirebaseRemoteConfig](https://github.com/firebase/firebase-ios-sdk).
+[AppVersionService](https://github.com/swift-man/LaunchingService) calls api using [FirebaseRemoteConfig](https://github.com/firebase/firebase-ios-sdk).
 
 ```swift
 import Dependencies
-import AppVersionService
+import LaunchingService
 
-extension AppVersionFetchService: DependencyKey, AppVersionInteractable {
-  public static var liveValue = AppVersionFetchService(keyStore: AppVersionServiceKeyStore())
+extension LaunchingService: DependencyKey, LaunchingInteractable {
+  public static var liveValue = LaunchingService(keyStore: LaunchingServiceKeyStore())
 }
 
 extension DependencyValues {
-  var appVersionService: AppVersionFetchService {
-    get { self[AppVersionFetchService.self] }
-    set { self[AppVersionFetchService.self] = newValue }
+  var launchingService: LaunchingService {
+    get { self[LaunchingService.self] }
+    set { self[LaunchingService.self] = newValue }
   }
 }
 ```

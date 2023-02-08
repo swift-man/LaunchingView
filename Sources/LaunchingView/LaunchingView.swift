@@ -12,7 +12,7 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
   let store: StoreOf<Launching>
   
   @State
-  var onLaunching: Bool = false
+  var onLaunching = false
   
   let contentView: () -> Content
   let launchScreen: () -> LaunchScreen
@@ -32,9 +32,9 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
       } else {
         launchScreen()
           .onAppear {
-            viewStore.send(.fetchAppVersion)
+            viewStore.send(.fetchAppUpdateState)
           }
-          .onChange(of: viewStore.isSuccess) { newValue in
+          .onChange(of: viewStore.isValid) { newValue in
             onLaunching = newValue
           }
       }
@@ -48,8 +48,8 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
       dismiss: .optionalUpdateConfirmDismissed
     )
     .alert(
-      self.store.scope(state: \.fetchErrorAlert),
-      dismiss: .fetchErrorAlertDismissed
+      self.store.scope(state: \.appUpdateFetchErrorAlert),
+      dismiss: .appUpdateFetchErrorAlertDismissed
     )
   }
 }

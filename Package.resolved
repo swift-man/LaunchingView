@@ -10,15 +10,6 @@
       }
     },
     {
-      "identity" : "appversionservice",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/swift-man/AppVersionService",
-      "state" : {
-        "revision" : "c578b25b88f7dc15a95af5bd27f318a9cdca27de",
-        "version" : "0.5.0"
-      }
-    },
-    {
       "identity" : "boringssl-swiftpm",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/firebase/boringssl-SwiftPM.git",
@@ -88,6 +79,15 @@
       "state" : {
         "revision" : "96d7cc73a71ce950723aa3c50ce4fb275ae180b8",
         "version" : "3.1.0"
+      }
+    },
+    {
+      "identity" : "launchingservice",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swift-man/LaunchingService",
+      "state" : {
+        "revision" : "c9059f2d119583881bab0b685cced0c854ae4568",
+        "version" : "0.6.1"
       }
     },
     {

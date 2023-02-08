@@ -16,14 +16,14 @@ let package = Package(
     ],
     dependencies: [
       .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.50.1"),
-      .package(url: "https://github.com/swift-man/AppVersionService", from: "0.5.0"),
+      .package(url: "https://github.com/swift-man/LaunchingService", from: "0.6.1"),
     ],
     targets: [
         .target(
             name: "LaunchingView",
             dependencies: [
               .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-              .product(name: "AppVersionService", package: "AppVersionService"),
+              .product(name: "LaunchingService", package: "LaunchingService"),
             ]),
     ]
 )
