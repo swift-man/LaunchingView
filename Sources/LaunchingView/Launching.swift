@@ -27,7 +27,7 @@ struct Launching: ReducerProtocol {
     
     /// Launching.State 생성
     /// - Parameter optionalUpdateDoneText: 선택 업데이트 Alert 에서 `업데이트` 버튼의 Title을 변경합니다.
-    init(optionalUpdateDoneText: TextState = TextState("Update")) {
+    init(optionalUpdateDoneText: TextState) {
       self.optionalUpdateDoneText = optionalUpdateDoneText
     }
   }

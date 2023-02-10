@@ -9,10 +9,7 @@ import ComposableArchitecture
 import SwiftUI
 
 public struct AsyncLaunchingView<Content: View>: View {
-  private let store = Store(
-    initialState: Launching.State(),
-    reducer: Launching()
-  )
+  private let store: StoreOf<Launching>
   
   private let contentView: () -> Content
   
@@ -24,8 +21,14 @@ public struct AsyncLaunchingView<Content: View>: View {
   /// This initializer always succeeds
   /// - Parameters:
   ///   - content: The callback that SwiftUI contentView
-  public init(@ViewBuilder content: @escaping () -> Content) {
+  ///   - optionalUpdateDoneText: 선택 업데이트 Alert 에서 `업데이트` 버튼의 Title을 변경합니다.
+  public init(@ViewBuilder content: @escaping () -> Content,
+              optionalUpdateDoneText: TextState = TextState("Update")) {
     self.contentView = content
+    self.store = Store(
+      initialState: Launching.State(optionalUpdateDoneText: optionalUpdateDoneText),
+      reducer: Launching()
+    )
   }
   
   public var body: some View {

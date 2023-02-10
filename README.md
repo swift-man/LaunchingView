@@ -13,7 +13,8 @@ This is a SwiftUI view based on The [The Composable Architecture](https://github
 
 ## Feature
 * [x] AsyncLaunchingView
-* [ ] AppLife Cycle - Become Active
+* [x] AppLife Cycle - Become Active
+* [ ] Optional Update - Title
 
 ## Setup View
 ### Sync Process
