@@ -16,6 +16,9 @@ public struct AsyncLaunchingView<Content: View>: View {
   
   private let contentView: () -> Content
   
+  @Environment(\.scenePhase)
+  private var scenePhase
+  
   /// Creates a new AsyncLaunchingView
   ///
   /// This initializer always succeeds
@@ -30,6 +33,11 @@ public struct AsyncLaunchingView<Content: View>: View {
       contentView()
         .onAppear {
           viewStore.send(.fetchAppUpdateState)
+        }
+        .onChange(of: scenePhase) { newValue in
+          if newValue == .active {
+            viewStore.send(.fetchAppUpdateState)
+          }
         }
     }
     .alert(

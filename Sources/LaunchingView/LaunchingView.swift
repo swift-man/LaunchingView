@@ -64,6 +64,9 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
   @Binding
   private var isFinished: Bool
   
+  @Environment(\.scenePhase)
+  private var scenePhase
+  
   /// Creates a new LaunchingView
   ///
   /// This initializer always succeeds
@@ -85,6 +88,11 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
     WithViewStore(self.store, observe: { $0 }) { viewStore in
       if viewStore.isValid && isFinished {
         contentView()
+          .onChange(of: scenePhase) { newValue in
+            if newValue == .active {
+              viewStore.send(.fetchAppUpdateState)
+            }
+          }
       } else {
         launchScreen()
           .onAppear {
