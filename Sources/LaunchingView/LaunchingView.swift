@@ -40,49 +40,62 @@ import SwiftUI
 ///       @UIApplicationDelegateAdaptor(AppDelegate.self)
 ///       var delegate
 ///
-///       @Dependency(\.launchingService) var launchingService
-///
 ///       var body: some Scene {
 ///         WindowGroup {
-///           LaunchingView(# RootView #, # LaunchScreenView # (
-///             store: Store(
-///             initialState: Launching.State(...),
-///             reducer: Launching(launchingInteractor: launchingService)
-///           ),
-///           contentView: {
-///             # RootView #
-///           },
-///           launchScreen: {
-///             # LaunchScreenView #
-///           })
+///           LaunchingView(# RootView #, # LaunchScreenView #
+///             contentView: {
+///               # RootView #
+///             },
+///             launchScreen: {
+///               # LaunchScreenView #
+///             })
 ///         }
 ///       }
 ///     }
 public struct LaunchingView<Content: View, LaunchScreen: View>: View {
-  let store: StoreOf<Launching>
+  private let store: StoreOf<Launching>
   
-  let contentView: () -> Content
-  let launchScreen: () -> LaunchScreen
+  private let contentView: () -> Content
+  private let launchScreen: () -> LaunchScreen
+  
+  @Binding
+  private var isFinished: Bool
+  
+  @Environment(\.scenePhase)
+  private var scenePhase
   
   /// Creates a new LaunchingView
   ///
   /// This initializer always succeeds
   /// - Parameters:
-  ///   - store: A binding to a view's ``store`` property.
-  ///   - contentView: The callback that SwiftUI contentView
+  ///   - content: The callback that SwiftUI contentView
   ///   - launchScreen: The callback that SwiftUI launchScreen
-  public init(store: StoreOf<Launching>,
-       @ViewBuilder contentView: @escaping () -> Content,
-       @ViewBuilder launchScreen: @escaping () -> LaunchScreen) {
-    self.contentView = contentView
+  ///   - optionalUpdateDoneText: 선택 업데이트 Alert 에서 `업데이트` 버튼의 Title을 변경합니다.
+  ///   - isFinished: Wait for your task to finish and show the content 
+  public init(
+       @ViewBuilder content: @escaping () -> Content,
+       @ViewBuilder launchScreen: @escaping () -> LaunchScreen,
+       optionalUpdateDoneText: TextState = TextState("Update"),
+       isFinished: Binding<Bool> = .constant(true)
+  ) {
+    self.contentView = content
     self.launchScreen = launchScreen
-    self.store = store
+    self._isFinished = isFinished
+    self.store = Store(
+      initialState: Launching.State(optionalUpdateDoneText: optionalUpdateDoneText),
+      reducer: Launching()
+    )
   }
   
   public var body: some View {
     WithViewStore(self.store, observe: { $0 }) { viewStore in
-      if viewStore.isValid {
+      if viewStore.isValid && isFinished {
         contentView()
+          .onChange(of: scenePhase) { newValue in
+            if newValue == .active {
+              viewStore.send(.fetchAppUpdateState)
+            }
+          }
       } else {
         launchScreen()
           .onAppear {
@@ -101,6 +114,10 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
     .alert(
       self.store.scope(state: \.appUpdateFetchErrorAlert),
       dismiss: .appUpdateFetchErrorAlertDismissed
+    )
+    .alert(
+      self.store.scope(state: \.noticeAlert),
+      dismiss: .noticeAlertDismissed
     )
   }
 }

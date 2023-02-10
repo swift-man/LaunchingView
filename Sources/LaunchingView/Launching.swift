@@ -10,24 +10,29 @@ import ComposableArchitecture
 import SwiftUI
 
 /// Launching은 App 구동을 위한 Request 를 포함한 AppUpdate 상태를 관리합니다.
-public struct Launching: ReducerProtocol {
+struct Launching: ReducerProtocol {
   // MARK: - Enums
-  public struct State: Equatable {
+  struct State: Equatable {
     var appUpdateState: AppUpdateStatus?
-    var appUpdateFetchErrorAlert: AlertState<Action>?
-    var forceUpdateAlert: AlertState<Action>?
     var isValid = false
+    
+    var appUpdateFetchErrorAlert: AlertState<Action>?
+    
+    var forceUpdateAlert: AlertState<Action>?
+    
     var optionalUpdateConfirm: ConfirmationDialogState<Action>?
     let optionalUpdateDoneText: TextState
     
+    var noticeAlert: AlertState<Action>?
+    
     /// Launching.State 생성
     /// - Parameter optionalUpdateDoneText: 선택 업데이트 Alert 에서 `업데이트` 버튼의 Title을 변경합니다.
-    public init(optionalUpdateDoneText: TextState = TextState("Update")) {
+    init(optionalUpdateDoneText: TextState) {
       self.optionalUpdateDoneText = optionalUpdateDoneText
     }
   }
   
-  public enum Action: Equatable {
+  enum Action: Equatable {
     
     /// AppUpdateState 를 Firebase.RemoteConfig 를 통해 가져옵니다.
     case fetchAppUpdateState
@@ -50,23 +55,20 @@ public struct Launching: ReducerProtocol {
     
     /// Action.fetchAppUpdateState 실패하면 Error Alert를 호출
     case showFetchErrorAlert(errorMessage: String)
+    
+    /// 공지 얼럿 Dismissed 시 호출
+    case noticeAlertDismissed
   }
   
-  private let launchingInteractor: LaunchingInteractable
+  @Dependency(\.launchingService)
+  var launchingService
   
-  /// make instance
-  /// - Parameters
-  ///   - launchingInteractor: `LaunchingService` instance
-  public init(launchingInteractor: LaunchingInteractable) {
-    self.launchingInteractor = launchingInteractor
-  }
-  
-  public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
+  func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
     switch action {
     case .fetchAppUpdateState:
       return .task {
         do {
-          let state = try await launchingInteractor.fetchLaunchingConfig()
+          let state = try await launchingService.fetchAppUpdateStatus(keyStore: LaunchingServiceKeyStore())
           return .setAppUpdateState(state)
         } catch {
           return .showFetchErrorAlert(errorMessage: error.localizedDescription)
@@ -76,10 +78,11 @@ public struct Launching: ReducerProtocol {
       guard let appUpdateState = state.appUpdateState else { return .none }
       
       switch appUpdateState {
-      case .valid, .optionalUpdateRequired:
+      case .valid, .optionalUpdateRequired, .notice:
         return .none
-      case .forcedUpdateRequired(message: _, appstoreURL: let appstoreURL):
-        SharedURL.shared.open(appstoreURL)
+        
+      case .forcedUpdateRequired(let updateAlert):
+        SharedURL.shared.open(updateAlert.appstoreURL)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
           exit(0)
@@ -95,10 +98,11 @@ public struct Launching: ReducerProtocol {
       guard let appUpdateState = state.appUpdateState else { return .none }
       
       switch appUpdateState {
-      case .valid, .forcedUpdateRequired:
+      case .valid, .forcedUpdateRequired, .notice:
         return .none
-      case .optionalUpdateRequired(message: _, appstoreURL: let appstoreURL):
-        SharedURL.shared.open(appstoreURL)
+        
+      case .optionalUpdateRequired(let updateAlert):
+        SharedURL.shared.open(updateAlert.appstoreURL)
         return .none
       }
       
@@ -110,24 +114,36 @@ public struct Launching: ReducerProtocol {
         state.isValid = true
         return .none
         
-      case .forcedUpdateRequired(message: let message, appstoreURL: _):
+      case .forcedUpdateRequired(let updateAlert):
         state.forceUpdateAlert = AlertState {
           TextState(Bundle.main.displayName)
         } message: {
-          TextState(message)
+          TextState(updateAlert.message)
         }
         return .none
         
-      case .optionalUpdateRequired(message: let message, appstoreURL: let appstoreURL):
+      case .optionalUpdateRequired(let updateAlert):
         state.isValid = true
         state.optionalUpdateConfirm = ConfirmationDialogState(title: {
           TextState(Bundle.main.displayName)
         }, actions: {
-          .default(state.optionalUpdateDoneText, action: .send(.optionalUpdateConfirmTapped(appStoreURL: appstoreURL)))
+          .default(state.optionalUpdateDoneText, action: .send(.optionalUpdateConfirmTapped(appStoreURL: updateAlert.appstoreURL)))
         }, message: {
-          TextState(message)
+          TextState(updateAlert.message)
         })
         
+        return .none
+        
+      case .notice(let noticeAlert):
+        if !noticeAlert.isAppTerminated {
+          state.isValid = true
+        }
+        
+        state.noticeAlert = AlertState {
+          TextState(noticeAlert.title)
+        } message: {
+          TextState(noticeAlert.message)
+        }
         return .none
       }
       
@@ -142,6 +158,28 @@ public struct Launching: ReducerProtocol {
     case .appUpdateFetchErrorAlertDismissed:
       state.appUpdateFetchErrorAlert = nil
       return .send(.fetchAppUpdateState)
+      
+    case .noticeAlertDismissed:
+      state.noticeAlert = nil
+      
+      guard let appUpdateState = state.appUpdateState else { return .none }
+      
+      switch appUpdateState {
+      case .valid, .forcedUpdateRequired, .optionalUpdateRequired:
+        return .none
+        
+      case .notice(let noticeAlert):
+        if let url = noticeAlert.doneURL {
+          SharedURL.shared.open(url)
+        }
+        
+        if noticeAlert.isAppTerminated {
+          DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
+            exit(0)
+          })
+        }
+        return .none
+      }
     }
   }
 }
