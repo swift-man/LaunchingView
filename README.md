@@ -77,7 +77,7 @@ import LaunchingView
 struct YourApp: App {
   var body: some Scene {
     WindowGroup {
-      AyncLaunchingView<ContentView> {
+      AsyncLaunchingView<ContentView> {
           ContentView()
       }
     }
