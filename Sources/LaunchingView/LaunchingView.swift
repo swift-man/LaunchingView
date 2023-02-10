@@ -40,43 +40,38 @@ import SwiftUI
 ///       @UIApplicationDelegateAdaptor(AppDelegate.self)
 ///       var delegate
 ///
-///       @Dependency(\.launchingService) var launchingService
-///
 ///       var body: some Scene {
 ///         WindowGroup {
-///           LaunchingView(# RootView #, # LaunchScreenView # (
-///             store: Store(
-///             initialState: Launching.State(...),
-///             reducer: Launching(launchingInteractor: launchingService)
-///           ),
-///           contentView: {
-///             # RootView #
-///           },
-///           launchScreen: {
-///             # LaunchScreenView #
-///           })
+///           LaunchingView(# RootView #, # LaunchScreenView #
+///             contentView: {
+///               # RootView #
+///             },
+///             launchScreen: {
+///               # LaunchScreenView #
+///             })
 ///         }
 ///       }
 ///     }
 public struct LaunchingView<Content: View, LaunchScreen: View>: View {
-  let store: StoreOf<Launching>
+  private let store = Store(
+    initialState: Launching.State(),
+    reducer: Launching()
+  )
   
-  let contentView: () -> Content
-  let launchScreen: () -> LaunchScreen
+  private let contentView: () -> Content
+  private let launchScreen: () -> LaunchScreen
   
   /// Creates a new LaunchingView
   ///
   /// This initializer always succeeds
   /// - Parameters:
-  ///   - store: A binding to a view's ``store`` property.
   ///   - contentView: The callback that SwiftUI contentView
   ///   - launchScreen: The callback that SwiftUI launchScreen
-  public init(store: StoreOf<Launching>,
+  public init(
        @ViewBuilder contentView: @escaping () -> Content,
        @ViewBuilder launchScreen: @escaping () -> LaunchScreen) {
     self.contentView = contentView
     self.launchScreen = launchScreen
-    self.store = store
   }
   
   public var body: some View {

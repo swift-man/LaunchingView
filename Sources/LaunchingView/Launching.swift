@@ -10,9 +10,9 @@ import ComposableArchitecture
 import SwiftUI
 
 /// Launching은 App 구동을 위한 Request 를 포함한 AppUpdate 상태를 관리합니다.
-public struct Launching: ReducerProtocol {
+struct Launching: ReducerProtocol {
   // MARK: - Enums
-  public struct State: Equatable {
+  struct State: Equatable {
     var appUpdateState: AppUpdateStatus?
     var isValid = false
     
@@ -27,12 +27,12 @@ public struct Launching: ReducerProtocol {
     
     /// Launching.State 생성
     /// - Parameter optionalUpdateDoneText: 선택 업데이트 Alert 에서 `업데이트` 버튼의 Title을 변경합니다.
-    public init(optionalUpdateDoneText: TextState = TextState("Update")) {
+    init(optionalUpdateDoneText: TextState = TextState("Update")) {
       self.optionalUpdateDoneText = optionalUpdateDoneText
     }
   }
   
-  public enum Action: Equatable {
+  enum Action: Equatable {
     
     /// AppUpdateState 를 Firebase.RemoteConfig 를 통해 가져옵니다.
     case fetchAppUpdateState
@@ -63,13 +63,7 @@ public struct Launching: ReducerProtocol {
   @Dependency(\.launchingService)
   var launchingService
   
-  /// make instance
-  /// - Parameters
-  ///   - launchingInteractor: `LaunchingService` instance
-  public init() {
-  }
-  
-  public func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
+  func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
     switch action {
     case .fetchAppUpdateState:
       return .task {
