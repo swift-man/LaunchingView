@@ -11,6 +11,10 @@ This is a SwiftUI view based on The [The Composable Architecture](https://github
 
 ---
 
+## Feature
+* [x] AsyncLaunchingView
+* [ ] AppLife Cycle - Become Active
+
 ## Setup View
 ### Sync Process
 ```swift
@@ -18,8 +22,6 @@ import LaunchingView
 
 @main
 struct YourApp: App {
-  @Dependency(\.launchingService) var launchingService
-  
   var body: some Scene {
     WindowGroup {
       LaunchingView<ContentView, LaunchScreenView>(
@@ -34,20 +36,49 @@ struct YourApp: App {
 }
 ```
 
+### Sync Process Animation or Task
+```swift
+import LaunchingView
+
+@main
+struct YourApp: App {
+  @State
+  var isFinished = false
+  
+  var body: some Scene {
+    WindowGroup {
+      LaunchingView<ContentView, VStack>(
+        contentView: {
+          ContentView()
+        },
+        launchScreen: {
+          VStack {
+            Image("ImageName")
+            Button {
+              isFinished = true
+            } label: {
+              Text("Task Finish!!").foregroundColor(Color.red)
+            }
+          }
+        },
+        isFinished: $isFinished
+      )
+    }
+  }
+}
+```
+
 ### Async Process
 ```swift
 import LaunchingView
 
 @main
 struct YourApp: App {
-  @Dependency(\.launchingService) var launchingService
-  
   var body: some Scene {
     WindowGroup {
-      AyncLaunchingView<ContentView>(
-        contentView: {
+      AyncLaunchingView<ContentView> {
           ContentView()
-        })
+      }
     }
   }
 }
