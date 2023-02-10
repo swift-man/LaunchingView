@@ -102,5 +102,9 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
       self.store.scope(state: \.appUpdateFetchErrorAlert),
       dismiss: .appUpdateFetchErrorAlertDismissed
     )
+    .alert(
+      self.store.scope(state: \.noticeAlert),
+      dismiss: .noticeAlertDismissed
+    )
   }
 }

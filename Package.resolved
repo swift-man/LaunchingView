@@ -86,8 +86,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swift-man/LaunchingService",
       "state" : {
-        "revision" : "8543bb87cee2927e54565f042c2c4ef66190e020",
-        "version" : "0.6.2"
+        "branch" : "feature/notice",
+        "revision" : "e31e2c9b4b11db002691cbf14c528db2776e9376"
       }
     },
     {
