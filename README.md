@@ -12,6 +12,7 @@ This is a SwiftUI view based on The [The Composable Architecture](https://github
 ---
 
 ## Setup View
+### Sync Process
 ```swift
 import LaunchingView
 
@@ -22,10 +23,6 @@ struct YourApp: App {
   var body: some Scene {
     WindowGroup {
       LaunchingView<ContentView, LaunchScreenView>(
-        store: Store(
-          initialState: Launching.State(),
-          reducer: Launching(launchingInteractor: launchingService)
-        ),
         contentView: {
           ContentView()
         },
@@ -37,24 +34,27 @@ struct YourApp: App {
 }
 ```
 
-## Dependency 
-[LaunchingService](https://github.com/swift-man/LaunchingService) calls api using [FirebaseRemoteConfig](https://github.com/firebase/firebase-ios-sdk).
-
+### Async Process
 ```swift
-import Dependencies
-import LaunchingService
+import LaunchingView
 
-extension LaunchingService: DependencyKey, LaunchingInteractable {
-  public static var liveValue = LaunchingService(keyStore: LaunchingServiceKeyStore())
-}
-
-extension DependencyValues {
-  var launchingService: LaunchingService {
-    get { self[LaunchingService.self] }
-    set { self[LaunchingService.self] = newValue }
+@main
+struct YourApp: App {
+  @Dependency(\.launchingService) var launchingService
+  
+  var body: some Scene {
+    WindowGroup {
+      AyncLaunchingView<ContentView>(
+        contentView: {
+          ContentView()
+        })
+    }
   }
 }
 ```
+
+## Dependency 
+[LaunchingService](https://github.com/swift-man/LaunchingService) calls api using [FirebaseRemoteConfig](https://github.com/firebase/firebase-ios-sdk).
 
 ## Installation
 ### Swift Package Manager

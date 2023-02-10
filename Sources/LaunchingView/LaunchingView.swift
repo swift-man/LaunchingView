@@ -61,22 +61,29 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
   private let contentView: () -> Content
   private let launchScreen: () -> LaunchScreen
   
+  @Binding
+  private var isFinished: Bool
+  
   /// Creates a new LaunchingView
   ///
   /// This initializer always succeeds
   /// - Parameters:
-  ///   - contentView: The callback that SwiftUI contentView
+  ///   - content: The callback that SwiftUI contentView
   ///   - launchScreen: The callback that SwiftUI launchScreen
+  ///   - isFinished: Wait for your task to finish and show the content 
   public init(
-       @ViewBuilder contentView: @escaping () -> Content,
-       @ViewBuilder launchScreen: @escaping () -> LaunchScreen) {
-    self.contentView = contentView
+       @ViewBuilder content: @escaping () -> Content,
+       @ViewBuilder launchScreen: @escaping () -> LaunchScreen,
+       isFinished: Binding<Bool> = .constant(true)
+  ) {
+    self.contentView = content
     self.launchScreen = launchScreen
+    self._isFinished = isFinished
   }
   
   public var body: some View {
     WithViewStore(self.store, observe: { $0 }) { viewStore in
-      if viewStore.isValid {
+      if viewStore.isValid && isFinished {
         contentView()
       } else {
         launchScreen()

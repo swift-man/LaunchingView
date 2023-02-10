@@ -20,14 +20,17 @@ public struct AsyncLaunchingView<Content: View>: View {
   ///
   /// This initializer always succeeds
   /// - Parameters:
-  ///   - contentView: The callback that SwiftUI contentView
-  public init(@ViewBuilder contentView: @escaping () -> Content) {
-    self.contentView = contentView
+  ///   - content: The callback that SwiftUI contentView
+  public init(@ViewBuilder content: @escaping () -> Content) {
+    self.contentView = content
   }
   
   public var body: some View {
     WithViewStore(self.store, observe: { $0 }) { viewStore in
       contentView()
+        .onAppear {
+          viewStore.send(.fetchAppUpdateState)
+        }
     }
     .alert(
       self.store.scope(state: \.forceUpdateAlert),
