@@ -14,22 +14,18 @@ struct Launching: ReducerProtocol {
   // MARK: - Enums
   struct State: Equatable {
     var appUpdateState: AppUpdateStatus?
-    var isValid = false
+    
+    
+    /// ContentView Display
+    var displayContentView = false
     
     var appUpdateFetchErrorAlert: AlertState<Action>?
     
     var forceUpdateAlert: AlertState<Action>?
     
-    var optionalUpdateConfirm: ConfirmationDialogState<Action>?
-    let optionalUpdateDoneText: TextState
+    var optionalUpdateAlert: AlertState<Action>?
     
     var noticeAlert: AlertState<Action>?
-    
-    /// Launching.State 생성
-    /// - Parameter optionalUpdateDoneText: 선택 업데이트 Alert 에서 `업데이트` 버튼의 Title을 변경합니다.
-    init(optionalUpdateDoneText: TextState) {
-      self.optionalUpdateDoneText = optionalUpdateDoneText
-    }
   }
   
   enum Action: Equatable {
@@ -48,10 +44,10 @@ struct Launching: ReducerProtocol {
     case forceUpdateAlertDismissed
     
     /// 선택 업데이트 얼럿 Dismissed 시 호출
-    case optionalUpdateConfirmDismissed
+    case optionalUpdateAlertDismissed
     
     /// 선택 업데이트 얼럿의 `업데이트`를 유저가 선택 시 호출
-    case optionalUpdateConfirmTapped(appStoreURL: URL?)
+    case optionalUpdateAlertDoneTapped(appStoreURL: URL?)
     
     /// Action.fetchAppUpdateState 실패하면 Error Alert를 호출
     case showFetchErrorAlert(errorMessage: String)
@@ -63,12 +59,15 @@ struct Launching: ReducerProtocol {
   @Dependency(\.launchingService)
   var launchingService
   
+  @Dependency(\.launchingAlertDefaultText)
+  var launchingAlertDefaultText
+  
   func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
     switch action {
     case .fetchAppUpdateState:
       return .task {
         do {
-          let state = try await launchingService.fetchAppUpdateStatus(keyStore: LaunchingServiceKeyStore())
+          let state = try await launchingService.fetchAppUpdateStatus()
           return .setAppUpdateState(state)
         } catch {
           return .showFetchErrorAlert(errorMessage: error.localizedDescription)
@@ -82,7 +81,7 @@ struct Launching: ReducerProtocol {
         return .none
         
       case .forcedUpdateRequired(let updateAlert):
-        SharedURL.shared.open(updateAlert.appstoreURL)
+        SharedURL.shared.open(updateAlert.alertDoneLinkURL)
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
           exit(0)
@@ -90,11 +89,11 @@ struct Launching: ReducerProtocol {
         return .none
       }
       
-    case .optionalUpdateConfirmDismissed:
-      state.optionalUpdateConfirm = nil
+    case .optionalUpdateAlertDismissed:
+      state.optionalUpdateAlert = nil
       return .none
       
-    case .optionalUpdateConfirmTapped:
+    case .optionalUpdateAlertDoneTapped:
       guard let appUpdateState = state.appUpdateState else { return .none }
       
       switch appUpdateState {
@@ -102,7 +101,7 @@ struct Launching: ReducerProtocol {
         return .none
         
       case .optionalUpdateRequired(let updateAlert):
-        SharedURL.shared.open(updateAlert.appstoreURL)
+        SharedURL.shared.open(updateAlert.alertDoneLinkURL)
         return .none
       }
       
@@ -111,38 +110,47 @@ struct Launching: ReducerProtocol {
       
       switch appVersionState {
       case .valid:
-        state.isValid = true
+        state.displayContentView = true
         return .none
         
       case .forcedUpdateRequired(let updateAlert):
+        let title = !updateAlert.title.isEmpty ? updateAlert.title : launchingAlertDefaultText.forceUpdate.title
+        let message = !updateAlert.message.isEmpty ? updateAlert.message : launchingAlertDefaultText.forceUpdate.message
+        
         state.forceUpdateAlert = AlertState {
-          TextState(Bundle.main.displayName)
+          TextState(title)
         } message: {
-          TextState(updateAlert.message)
+          TextState(message)
         }
         return .none
         
       case .optionalUpdateRequired(let updateAlert):
-        state.isValid = true
-        state.optionalUpdateConfirm = ConfirmationDialogState(title: {
-          TextState(Bundle.main.displayName)
-        }, actions: {
-          .default(state.optionalUpdateDoneText, action: .send(.optionalUpdateConfirmTapped(appStoreURL: updateAlert.appstoreURL)))
-        }, message: {
-          TextState(updateAlert.message)
-        })
+        let title = !updateAlert.title.isEmpty ? updateAlert.title : launchingAlertDefaultText.optionalUpdate.title
+        let message = !updateAlert.message.isEmpty ? updateAlert.message : launchingAlertDefaultText.optionalUpdate.message
+        
+        state.displayContentView = true
+        state.optionalUpdateAlert = AlertState(
+          title: TextState(title),
+          message: TextState(message),
+          primaryButton: .cancel(TextState(launchingAlertDefaultText.optionalUpdate.cancel)),
+          secondaryButton: .default(TextState(launchingAlertDefaultText.optionalUpdate.done),
+                                    action: .send(.optionalUpdateAlertDoneTapped(appStoreURL: updateAlert.alertDoneLinkURL)))
+        )
         
         return .none
         
       case .notice(let noticeAlert):
+        let title = !noticeAlert.title.isEmpty ? noticeAlert.title : launchingAlertDefaultText.notice.title
+        let message = !noticeAlert.message.isEmpty ? noticeAlert.message : launchingAlertDefaultText.notice.message
+        
         if !noticeAlert.isAppTerminated {
-          state.isValid = true
+          state.displayContentView = true
         }
         
         state.noticeAlert = AlertState {
-          TextState(noticeAlert.title)
+          TextState(title)
         } message: {
-          TextState(noticeAlert.message)
+          TextState(message)
         }
         return .none
       }

@@ -21,12 +21,10 @@ public struct AsyncLaunchingView<Content: View>: View {
   /// This initializer always succeeds
   /// - Parameters:
   ///   - content: The callback that SwiftUI contentView
-  ///   - optionalUpdateDoneText: 선택 업데이트 Alert 에서 `업데이트` 버튼의 Title을 변경합니다.
-  public init(@ViewBuilder content: @escaping () -> Content,
-              optionalUpdateDoneText: TextState = TextState("Update")) {
+  public init(@ViewBuilder content: @escaping () -> Content) {
     self.contentView = content
     self.store = Store(
-      initialState: Launching.State(optionalUpdateDoneText: optionalUpdateDoneText),
+      initialState: Launching.State(),
       reducer: Launching()
     )
   }
@@ -47,9 +45,9 @@ public struct AsyncLaunchingView<Content: View>: View {
       self.store.scope(state: \.forceUpdateAlert),
       dismiss: .forceUpdateAlertDismissed
     )
-    .confirmationDialog(
-      self.store.scope(state: \.optionalUpdateConfirm),
-      dismiss: .optionalUpdateConfirmDismissed
+    .alert(
+      self.store.scope(state: \.optionalUpdateAlert),
+      dismiss: .optionalUpdateAlertDismissed
     )
     .alert(
       self.store.scope(state: \.appUpdateFetchErrorAlert),
