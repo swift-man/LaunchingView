@@ -59,7 +59,7 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
   private let launchScreen: () -> LaunchScreen
   
   @Binding
-  private var isFinished: Bool
+  private var isUserCustomFlagFinished: Bool
   
   @Environment(\.scenePhase)
   private var scenePhase
@@ -70,26 +70,24 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
   /// - Parameters:
   ///   - content: The callback that SwiftUI contentView
   ///   - launchScreen: The callback that SwiftUI launchScreen
-  ///   - optionalUpdateDoneText: 선택 업데이트 Alert 에서 `업데이트` 버튼의 Title을 변경합니다.
   ///   - isFinished: Wait for your task to finish and show the content 
   public init(
        @ViewBuilder content: @escaping () -> Content,
        @ViewBuilder launchScreen: @escaping () -> LaunchScreen,
-       optionalUpdateDoneText: TextState = TextState("Update"),
        isFinished: Binding<Bool> = .constant(true)
   ) {
     self.contentView = content
     self.launchScreen = launchScreen
-    self._isFinished = isFinished
+    self._isUserCustomFlagFinished = isFinished
     self.store = Store(
-      initialState: Launching.State(optionalUpdateDoneText: optionalUpdateDoneText),
+      initialState: Launching.State(),
       reducer: Launching()
     )
   }
   
   public var body: some View {
     WithViewStore(self.store, observe: { $0 }) { viewStore in
-      if viewStore.isValid && isFinished {
+      if viewStore.displayContentView && isUserCustomFlagFinished {
         contentView()
           .onChange(of: scenePhase) { newValue in
             if newValue == .active {
@@ -107,9 +105,9 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
       self.store.scope(state: \.forceUpdateAlert),
       dismiss: .forceUpdateAlertDismissed
     )
-    .confirmationDialog(
-      self.store.scope(state: \.optionalUpdateConfirm),
-      dismiss: .optionalUpdateConfirmDismissed
+    .alert(
+      self.store.scope(state: \.optionalUpdateAlert),
+      dismiss: .optionalUpdateAlertDismissed
     )
     .alert(
       self.store.scope(state: \.appUpdateFetchErrorAlert),
