@@ -84,7 +84,7 @@ struct YourApp: App {
 }
 ```
 
-## Dependency 
+## Dependencies 
 [LaunchingService](https://github.com/swift-man/LaunchingService) calls api using [FirebaseRemoteConfig](https://github.com/firebase/firebase-ios-sdk).
 
 ### Custom Your Keys
