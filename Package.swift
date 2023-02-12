@@ -16,7 +16,7 @@ let package = Package(
     ],
     dependencies: [
       .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.50.1"),
-      .package(url: "https://github.com/swift-man/LaunchingService", branch: "env/move_tests_folder"),
+      .package(url: "https://github.com/swift-man/LaunchingService", from: "0.8.0"),
     ],
     targets: [
         .target(
