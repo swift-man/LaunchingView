@@ -8,8 +8,14 @@
 import Dependencies
 import Foundation
 
+@available(iOS 15.0, macOS 12, *)
+@available(tvOS, unavailable)
+@available(watchOS, unavailable)
 public struct LaunchingAlertDefaultText {
   
+  @available(iOS 15.0, macOS 12, *)
+  @available(tvOS, unavailable)
+  @available(watchOS, unavailable)
   public struct ForceUpdate {
     let title: String
     let message: String
@@ -24,6 +30,9 @@ public struct LaunchingAlertDefaultText {
     }
   }
   
+  @available(iOS 15.0, macOS 12, *)
+  @available(tvOS, unavailable)
+  @available(watchOS, unavailable)
   public struct OptionalUpdate {
     let title: String
     let message: String
@@ -41,6 +50,9 @@ public struct LaunchingAlertDefaultText {
     }
   }
   
+  @available(iOS 15.0, macOS 12, *)
+  @available(tvOS, unavailable)
+  @available(watchOS, unavailable)
   public struct Notice {
     let title: String
     let message: String
@@ -71,12 +83,18 @@ public struct LaunchingAlertDefaultText {
   }
 }
 
+@available(iOS 15.0, macOS 12, *)
+@available(tvOS, unavailable)
+@available(watchOS, unavailable)
 extension LaunchingAlertDefaultText: TestDependencyKey {
   public static var testValue: LaunchingAlertDefaultText {
     LaunchingAlertDefaultText()
   }
 }
 
+@available(iOS 15.0, macOS 12, *)
+@available(tvOS, unavailable)
+@available(watchOS, unavailable)
 extension DependencyValues {
   public var launchingAlertDefaultText: LaunchingAlertDefaultText {
     get { self[LaunchingAlertDefaultText.self] }

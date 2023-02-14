@@ -52,6 +52,9 @@ import SwiftUI
 ///         }
 ///       }
 ///     }
+@available(iOS 15.0, macOS 12, *)
+@available(tvOS, unavailable)
+@available(watchOS, unavailable)
 public struct LaunchingView<Content: View, LaunchScreen: View>: View {
   private let store: StoreOf<Launching>
   
