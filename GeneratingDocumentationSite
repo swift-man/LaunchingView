@@ -1,0 +1,4 @@
+$(xcrun --find docc) process-archive \
+	transform-for-static-hosting ./LaunchingView.doccarchive \
+	--output-path ./docs \
+	--hosting-base-path LaunchingView
