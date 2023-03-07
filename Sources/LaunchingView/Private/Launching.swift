@@ -15,6 +15,7 @@ struct Launching: ReducerProtocol {
   struct State: Equatable {
     var appUpdateState: AppUpdateStatus?
     
+    var isFetching = false
     
     /// ContentView Display
     var displayContentView = false
@@ -65,6 +66,9 @@ struct Launching: ReducerProtocol {
   func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
     switch action {
     case .fetchAppUpdateState:
+      guard !state.isFetching else { return .none }
+      
+      state.isFetching = true
       return .task {
         do {
           let state = try await launchingService.fetchAppUpdateStatus()
@@ -107,6 +111,7 @@ struct Launching: ReducerProtocol {
       
     case .setAppUpdateState(let appVersionState):
       state.appUpdateState = appVersionState
+      state.isFetching = false
       
       switch appVersionState {
       case .valid:
@@ -156,6 +161,7 @@ struct Launching: ReducerProtocol {
       }
       
     case .showFetchErrorAlert(errorMessage: let errorMessage):
+      state.isFetching = false
       state.appUpdateFetchErrorAlert = AlertState {
         TextState(Bundle.main.displayName)
       } message: {
