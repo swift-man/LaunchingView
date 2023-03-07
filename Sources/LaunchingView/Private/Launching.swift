@@ -13,8 +13,9 @@ import SwiftUI
 struct Launching: ReducerProtocol {
   // MARK: - Enums
   struct State: Equatable {
-    var appUpdateState: AppUpdateStatus?
+    var appUpdateStatus: AppUpdateStatus?
     
+    var isFetching = false
     
     /// ContentView Display
     var displayContentView = false
@@ -30,15 +31,15 @@ struct Launching: ReducerProtocol {
   
   enum Action: Equatable {
     
-    /// AppUpdateState 를 Firebase.RemoteConfig 를 통해 가져옵니다.
-    case fetchAppUpdateState
+    /// AppUpdateStatus 를 Firebase.RemoteConfig 를 통해 가져옵니다.
+    case fetchAppUpdateStatus
     
-    /// Action.fetchAppUpdateState 실패 후 Error 얼럿 Dismissed 시 호출되며
-    /// Action.fetchAppUpdateState 가 다시 호출 됩니다.
+    /// Action.fetchAppUpdateStatus 실패 후 Error 얼럿 Dismissed 시 호출되며
+    /// Action.fetchAppUpdateStatus 가 다시 호출 됩니다.
     case appUpdateFetchErrorAlertDismissed
     
-    /// Action.fetchAppUpdateState 를 통해 AppUpdateStatus 를 세팅합니다.
-    case setAppUpdateState(AppUpdateStatus)
+    /// Action.fetchAppUpdateStatus 를 통해 AppUpdateStatus 를 세팅합니다.
+    case setAppUpdateStatus(AppUpdateStatus)
     
     /// 강제 업데이트 얼럿 Dismissed 시 호출
     case forceUpdateAlertDismissed
@@ -64,19 +65,22 @@ struct Launching: ReducerProtocol {
   
   func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
     switch action {
-    case .fetchAppUpdateState:
+    case .fetchAppUpdateStatus:
+      guard !state.isFetching else { return .none }
+      
+      state.isFetching = true
       return .task {
         do {
-          let state = try await launchingService.fetchAppUpdateStatus()
-          return .setAppUpdateState(state)
+          let appStatus = try await launchingService.fetchAppUpdateStatus()
+          return .setAppUpdateStatus(appStatus)
         } catch {
           return .showFetchErrorAlert(errorMessage: error.localizedDescription)
         }
       }
     case .forceUpdateAlertDismissed:
-      guard let appUpdateState = state.appUpdateState else { return .none }
+      guard let appUpdateStatus = state.appUpdateStatus else { return .none }
       
-      switch appUpdateState {
+      switch appUpdateStatus {
       case .valid, .optionalUpdateRequired, .notice:
         return .none
         
@@ -94,9 +98,9 @@ struct Launching: ReducerProtocol {
       return .none
       
     case .optionalUpdateAlertDoneTapped:
-      guard let appUpdateState = state.appUpdateState else { return .none }
+      guard let appUpdateStatus = state.appUpdateStatus else { return .none }
       
-      switch appUpdateState {
+      switch appUpdateStatus {
       case .valid, .forcedUpdateRequired, .notice:
         return .none
         
@@ -105,10 +109,11 @@ struct Launching: ReducerProtocol {
         return .none
       }
       
-    case .setAppUpdateState(let appVersionState):
-      state.appUpdateState = appVersionState
+    case .setAppUpdateStatus(let appVersionStatus):
+      state.isFetching = false
+      state.appUpdateStatus = appVersionStatus
       
-      switch appVersionState {
+      switch appVersionStatus {
       case .valid:
         state.displayContentView = true
         return .none
@@ -156,6 +161,8 @@ struct Launching: ReducerProtocol {
       }
       
     case .showFetchErrorAlert(errorMessage: let errorMessage):
+      state.isFetching = false
+      
       state.appUpdateFetchErrorAlert = AlertState {
         TextState(Bundle.main.displayName)
       } message: {
@@ -165,14 +172,14 @@ struct Launching: ReducerProtocol {
       
     case .appUpdateFetchErrorAlertDismissed:
       state.appUpdateFetchErrorAlert = nil
-      return .send(.fetchAppUpdateState)
+      return .send(.fetchAppUpdateStatus)
       
     case .noticeAlertDismissed:
       state.noticeAlert = nil
       
-      guard let appUpdateState = state.appUpdateState else { return .none }
+      guard let appUpdateStatus = state.appUpdateStatus else { return .none }
       
-      switch appUpdateState {
+      switch appUpdateStatus {
       case .valid, .forcedUpdateRequired, .optionalUpdateRequired:
         return .none
         

@@ -94,13 +94,13 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
         contentView()
           .onChange(of: scenePhase) { newValue in
             if newValue == .active {
-              viewStore.send(.fetchAppUpdateState)
+              viewStore.send(.fetchAppUpdateStatus)
             }
           }
       } else {
         launchScreen()
           .onAppear {
-            viewStore.send(.fetchAppUpdateState)
+            viewStore.send(.fetchAppUpdateStatus)
           }
       }
     }

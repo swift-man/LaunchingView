@@ -36,11 +36,11 @@ public struct AsyncLaunchingView<Content: View>: View {
     WithViewStore(self.store, observe: { $0 }) { viewStore in
       contentView()
         .onAppear {
-          viewStore.send(.fetchAppUpdateState)
+          viewStore.send(.fetchAppUpdateStatus)
         }
         .onChange(of: scenePhase) { newValue in
           if newValue == .active {
-            viewStore.send(.fetchAppUpdateState)
+            viewStore.send(.fetchAppUpdateStatus)
           }
         }
     }
