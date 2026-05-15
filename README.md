@@ -12,7 +12,7 @@ This is a SwiftUI view based on [The Composable Architecture](https://github.com
 
 ---
 ### Document Web Site
-[LaunchingView](swift-man.github.io/LaunchingView/documentation/launchingview/)
+[LaunchingView](https://swift-man.github.io/docs/LaunchingView/documentation/launchingview/)
 
 ## Feature
 * [x] AsyncLaunchingView

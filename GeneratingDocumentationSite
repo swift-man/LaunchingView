@@ -3,7 +3,7 @@ set -e
 
 DOCC_ARCHIVE_PATH="${DOCC_ARCHIVE_PATH:-./LaunchingView.doccarchive}"
 DOCS_OUTPUT_PATH="${DOCS_OUTPUT_PATH:-./docs}"
-HOSTING_BASE_PATH="${HOSTING_BASE_PATH:-LaunchingView}"
+HOSTING_BASE_PATH="${HOSTING_BASE_PATH:-docs/LaunchingView}"
 
 "$(xcrun --find docc)" process-archive \
   transform-for-static-hosting "$DOCC_ARCHIVE_PATH" \
