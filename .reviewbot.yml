@@ -18,6 +18,7 @@ review:
     - "dist/**"
     - "node_modules/**"
     - "vendor/**"
+    - ".swiftpm/xcode/**"
 
     # generated files
     - "**/Generated/**"
