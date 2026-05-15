@@ -30,7 +30,8 @@ xcrun docc convert Sources/LaunchingView/LaunchingView.docc \
 ./GeneratingDocumentationSite
 ```
 
-- Commit generated DocC changes under `LaunchingView.doccarchive/` and `docs/` when documentation output changes.
+- `./GeneratingDocumentationSite` transforms the temporary `LaunchingView.doccarchive/` into `docs/` and removes the archive afterward.
+- Commit generated DocC changes under `docs/` only. Do not commit `LaunchingView.doccarchive/`.
 
 ## Pull Request Review Handling
 

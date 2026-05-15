@@ -1,4 +1,16 @@
-$(xcrun --find docc) process-archive \
-	transform-for-static-hosting ./LaunchingView.doccarchive \
-	--output-path ./docs \
-	--hosting-base-path LaunchingView
+#!/bin/sh
+set -e
+
+DOCC_ARCHIVE_PATH="${DOCC_ARCHIVE_PATH:-./LaunchingView.doccarchive}"
+DOCS_OUTPUT_PATH="${DOCS_OUTPUT_PATH:-./docs}"
+HOSTING_BASE_PATH="${HOSTING_BASE_PATH:-LaunchingView}"
+
+"$(xcrun --find docc)" process-archive \
+  transform-for-static-hosting "$DOCC_ARCHIVE_PATH" \
+  --output-path "$DOCS_OUTPUT_PATH" \
+  --hosting-base-path "$HOSTING_BASE_PATH"
+
+find "$DOCS_OUTPUT_PATH" -type f -name '*.js' \
+  -exec perl -0pi -e 's/[ \t]+$//mg' {} +
+
+rm -rf "$DOCC_ARCHIVE_PATH"
