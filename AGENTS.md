@@ -25,7 +25,7 @@ xcrun docc convert Sources/LaunchingView/LaunchingView.docc \
   --additional-symbol-graph-dir .build/docc-symbolgraphs \
   --fallback-display-name LaunchingView \
   --fallback-bundle-identifier com.swift-man.LaunchingView \
-  --fallback-bundle-version 0.8.2 \
+  --fallback-bundle-version 0.8.3 \
   --output-path LaunchingView.doccarchive
 ./GeneratingDocumentationSite
 ```
