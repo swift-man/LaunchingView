@@ -22,19 +22,6 @@ jobs:
 
       - name: Build DocC
         run: |
-          swift build
-          swift package dump-symbol-graph --minimum-access-level public
-          rm -rf .build/docc-symbolgraphs docs LaunchingView.doccarchive
-          mkdir -p .build/docc-symbolgraphs
-          find .build -path '*/symbolgraph/LaunchingView*.symbols.json' \
-            ! -name 'LaunchingViewPackageTests.symbols.json' \
-            -exec cp {} .build/docc-symbolgraphs/ \;
-          xcrun docc convert Sources/LaunchingView/LaunchingView.docc \
-            --additional-symbol-graph-dir .build/docc-symbolgraphs \
-            --fallback-display-name LaunchingView \
-            --fallback-bundle-identifier com.swift-man.LaunchingView \
-            --fallback-bundle-version 0.9.0 \
-            --output-path LaunchingView.doccarchive
           ./GeneratingDocumentationSite
           touch ./docs/.nojekyll
 

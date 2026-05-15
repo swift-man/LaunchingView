@@ -12,25 +12,13 @@
 
 - Run `swift build` after code changes.
 - Run `swift test` for verification.
-- After a successful build, update DocC output before finalizing documentation changes:
+- After documentation changes, regenerate the local DocC static site before finalizing:
 
 ```bash
-swift package dump-symbol-graph --minimum-access-level public
-rm -rf .build/docc-symbolgraphs docs LaunchingView.doccarchive
-mkdir -p .build/docc-symbolgraphs
-find .build -path '*/symbolgraph/LaunchingView*.symbols.json' \
-  ! -name 'LaunchingViewPackageTests.symbols.json' \
-  -exec cp {} .build/docc-symbolgraphs/ \;
-xcrun docc convert Sources/LaunchingView/LaunchingView.docc \
-  --additional-symbol-graph-dir .build/docc-symbolgraphs \
-  --fallback-display-name LaunchingView \
-  --fallback-bundle-identifier com.swift-man.LaunchingView \
-  --fallback-bundle-version 0.9.0 \
-  --output-path LaunchingView.doccarchive
 ./GeneratingDocumentationSite
 ```
 
-- `./GeneratingDocumentationSite` transforms the temporary `LaunchingView.doccarchive/` into `docs/` and removes the archive afterward.
+- `./GeneratingDocumentationSite` builds the package, emits symbol graphs, converts `Sources/LaunchingView/LaunchingView.docc`, transforms the archive into static `docs/`, and removes temporary DocC artifacts afterward.
 - Do not commit generated DocC output. `docs/` and `LaunchingView.doccarchive/` are local/CI artifacts.
 - The `Deploy DocC` GitHub Actions workflow publishes generated documentation to `swift-man/docs` under `LaunchingView/`.
 - Configure `DOCS_DEPLOY_KEY` with a private deploy key in this repository, and add the matching public key with write access to `swift-man/docs`.
