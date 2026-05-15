@@ -42,13 +42,14 @@ import SwiftUI
 ///
 ///       var body: some Scene {
 ///         WindowGroup {
-///           LaunchingView(# RootView #, # LaunchScreenView #
-///             contentView: {
+///           LaunchingView(
+///             content: {
 ///               # RootView #
 ///             },
 ///             launchScreen: {
 ///               # LaunchScreenView #
-///             })
+///             }
+///           )
 ///         }
 ///       }
 ///     }
@@ -73,7 +74,7 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
   /// - Parameters:
   ///   - content: The callback that SwiftUI contentView
   ///   - launchScreen: The callback that SwiftUI launchScreen
-  ///   - isFinished: Wait for your task to finish and show the content 
+  ///   - isFinished: Wait for your task to finish and show the content
   public init(
        @ViewBuilder content: @escaping () -> Content,
        @ViewBuilder launchScreen: @escaping () -> LaunchScreen,
