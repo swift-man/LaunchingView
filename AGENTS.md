@@ -16,7 +16,7 @@
 
 ```bash
 swift package dump-symbol-graph --minimum-access-level public
-rm -rf .build/docc-symbolgraphs
+rm -rf .build/docc-symbolgraphs docs LaunchingView.doccarchive
 mkdir -p .build/docc-symbolgraphs
 find .build -path '*/symbolgraph/LaunchingView*.symbols.json' \
   ! -name 'LaunchingViewPackageTests.symbols.json' \
@@ -25,12 +25,15 @@ xcrun docc convert Sources/LaunchingView/LaunchingView.docc \
   --additional-symbol-graph-dir .build/docc-symbolgraphs \
   --fallback-display-name LaunchingView \
   --fallback-bundle-identifier com.swift-man.LaunchingView \
-  --fallback-bundle-version 0.8.2 \
+  --fallback-bundle-version 0.9.0 \
   --output-path LaunchingView.doccarchive
 ./GeneratingDocumentationSite
 ```
 
-- Commit generated DocC changes under `LaunchingView.doccarchive/` and `docs/` when documentation output changes.
+- `./GeneratingDocumentationSite` transforms the temporary `LaunchingView.doccarchive/` into `docs/` and removes the archive afterward.
+- Do not commit generated DocC output. `docs/` and `LaunchingView.doccarchive/` are local/CI artifacts.
+- The `Deploy DocC` GitHub Actions workflow publishes generated documentation to `swift-man/docs` under `LaunchingView/`.
+- Configure `DOCS_DEPLOY_KEY` with a private deploy key in this repository, and add the matching public key with write access to `swift-man/docs`.
 
 ## Pull Request Review Handling
 
