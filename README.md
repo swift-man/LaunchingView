@@ -11,8 +11,8 @@ This is a SwiftUI view based on [The Composable Architecture](https://github.com
 ![Badge - License](https://img.shields.io/badge/license-MIT-black?style=flat-square)
 
 ---
-### Document Web Site
-[LaunchingView](https://swift-man.github.io/docs/LaunchingView/documentation/launchingview/)
+### Documentation Website
+[LaunchingView](https://docs.gorani.me/LaunchingView/documentation/launchingview/)
 
 ## Feature
 * [x] AsyncLaunchingView
@@ -91,7 +91,7 @@ struct YourApp: App {
 ## Dependencies
 [LaunchingService](https://github.com/swift-man/LaunchingService) calls api using [FirebaseRemoteConfig](https://github.com/firebase/firebase-ios-sdk).
 
-### Custom Your Keys
+### Customize Your Keys
 ```swift
 import Dependencies
 import LaunchingService
@@ -101,7 +101,7 @@ extension RemoteConfigRegisterdKeys: DependencyKey {
 }
 ```
 
-### Custom Your Alert Default Text
+### Customize Your Alert Default Text
 
 ```swift
 import Dependencies
