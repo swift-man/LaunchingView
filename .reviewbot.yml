@@ -8,6 +8,7 @@ review:
     - "Tuist/**/*.swift"
     - "**/Info.plist"
     - "README.md"
+    - "GeneratingDocumentationSite"
 
   exclude:
     # dependency / build output
@@ -57,6 +58,7 @@ review:
     - ".reviewbot.yml"
     - "AGENTS.md"
     - "README.md"
+    - "GeneratingDocumentationSite"
     - "Package.swift"
     - "Project.swift"
     - "Tuist/**/*.swift"

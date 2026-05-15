@@ -21,6 +21,7 @@
 - `./GeneratingDocumentationSite` builds the package, emits symbol graphs, converts `Sources/LaunchingView/LaunchingView.docc`, transforms the archive into static `docs/`, and removes temporary DocC artifacts afterward.
 - Do not commit generated DocC output. `docs/` and `LaunchingView.doccarchive/` are local/CI artifacts.
 - The `Deploy DocC` GitHub Actions workflow publishes generated documentation to `swift-man/docs` under `LaunchingView/`.
+- `swift-man/docs` uses the `docs.gorani.me` custom domain, so DocC static hosting base path should remain `LaunchingView`, not `docs/LaunchingView`.
 - Configure `DOCS_DEPLOY_KEY` with a private deploy key in this repository, and add the matching public key with write access to `swift-man/docs`.
 
 ## Pull Request Review Handling
