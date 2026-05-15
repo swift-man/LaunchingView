@@ -1,6 +1,6 @@
 # LaunchingView
 
-This is a SwiftUI view based on The [The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture).
+This is a SwiftUI view based on [The Composable Architecture](https://github.com/pointfreeco/swift-composable-architecture).
 
 ![Badge](https://img.shields.io/badge/swift-white.svg?style=flat-square&logo=Swift)
 ![Badge](https://img.shields.io/badge/SwiftUI-001b87.svg?style=flat-square&logo=Swift&logoColor=black)
@@ -8,7 +8,7 @@ This is a SwiftUI view based on The [The Composable Architecture](https://github
 ![Badge - Swift Package Manager](https://img.shields.io/badge/SPM-compatible-orange?style=flat-square)
 ![Badge - Platform](https://img.shields.io/badge/macOS-v12.0-yellow?style=flat-square)
 ![Badge - Platform](https://img.shields.io/badge/iOS-v15.0-yellow?style=flat-square)
-![Badge - License](https://img.shields.io/badge/license-MIT-black?style=flat-square)  
+![Badge - License](https://img.shields.io/badge/license-MIT-black?style=flat-square)
 
 ---
 ### Document Web Site
@@ -27,13 +27,14 @@ import LaunchingView
 struct YourApp: App {
   var body: some Scene {
     WindowGroup {
-      LaunchingView<ContentView, LaunchScreenView>(
-        contentView: {
+      LaunchingView(
+        content: {
           ContentView()
         },
         launchScreen: {
           LaunchScreenView()
-        })
+        }
+      )
     }
   }
 }
@@ -47,11 +48,11 @@ import LaunchingView
 struct YourApp: App {
   @State
   var isFinished = false
-  
+
   var body: some Scene {
     WindowGroup {
-      LaunchingView<ContentView, VStack>(
-        contentView: {
+      LaunchingView(
+        content: {
           ContentView()
         },
         launchScreen: {
@@ -80,14 +81,14 @@ struct YourApp: App {
   var body: some Scene {
     WindowGroup {
       AsyncLaunchingView<ContentView> {
-          ContentView()
+        ContentView()
       }
     }
   }
 }
 ```
 
-## Dependencies 
+## Dependencies
 [LaunchingService](https://github.com/swift-man/LaunchingService) calls api using [FirebaseRemoteConfig](https://github.com/firebase/firebase-ios-sdk).
 
 ### Custom Your Keys
@@ -96,7 +97,7 @@ import Dependencies
 import LaunchingService
 
 extension RemoteConfigRegisterdKeys: DependencyKey {
-  public static var liveValue = RemoteConfigRegisterdKeys(#...#) 
+  public static var liveValue = RemoteConfigRegisterdKeys(#...#)
 }
 ```
 
@@ -114,9 +115,9 @@ extension LaunchingAlertDefaultText: DependencyKey {
 ## Installation
 ### Swift Package Manager
 
-The [Swift Package Manager](https://swift.org/package-manager/) is a tool for automating the distribution of Swift code and is integrated into the `swift` compiler. 
+The [Swift Package Manager](https://swift.org/package-manager/) is a tool for automating the distribution of Swift code and is integrated into the `swift` compiler.
 
-Once you have your Swift package set up, adding Alamofire as a dependency is as easy as adding it to the `dependencies` value of your `Package.swift`.
+Once you have your Swift package set up, adding LaunchingView as a dependency is as easy as adding it to the `dependencies` value of your `Package.swift`.
 
 ```swift
 dependencies: [
