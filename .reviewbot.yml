@@ -1,0 +1,61 @@
+version: 1
+
+review:
+  include:
+    - "**/*.swift"
+    - "Package.swift"
+    - "Project.swift"
+    - "Tuist/**/*.swift"
+    - "**/Info.plist"
+
+  exclude:
+    # dependency / build output
+    - "Pods/**"
+    - "Carthage/**"
+    - ".build/**"
+    - "DerivedData/**"
+    - "build/**"
+    - "dist/**"
+    - "node_modules/**"
+    - "vendor/**"
+
+    # generated files
+    - "**/Generated/**"
+    - "**/*.generated.swift"
+    - "**/*.pb.swift"
+    - "**/*.graphql.swift"
+    - "**/*+Generated.swift"
+
+    # resources
+    - "**/*.xcassets/**"
+    - "**/*.png"
+    - "**/*.jpg"
+    - "**/*.jpeg"
+    - "**/*.gif"
+    - "**/*.webp"
+    - "**/*.pdf"
+    - "**/*.mp4"
+    - "**/*.mov"
+
+    # lock files
+    - "Package.resolved"
+    - "Podfile.lock"
+    - "package-lock.json"
+    - "yarn.lock"
+    - "pnpm-lock.yaml"
+
+    # docs / generated DocC output
+    - "README.md"
+    - "CHANGELOG.md"
+    - "docs/**"
+    - "LaunchingView.doccarchive/**"
+    - "**/*.doccarchive/**"
+    - "**/*.docc/**"
+    - "**/*.md"
+
+  always_review:
+    - ".reviewbot.yml"
+    - "AGENTS.md"
+    - "Package.swift"
+    - "Project.swift"
+    - "Tuist/**/*.swift"
