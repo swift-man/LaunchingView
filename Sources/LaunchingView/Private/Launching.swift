@@ -68,6 +68,9 @@ struct Launching: ReducerProtocol {
 
   @Dependency(\.appTerminator)
   var appTerminator
+
+  @Dependency(\.appTerminationDelay)
+  var appTerminationDelay
   
   func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
     switch action {
@@ -201,13 +204,15 @@ struct Launching: ReducerProtocol {
 
     let openURL = self.openURL
     let appTerminator = self.appTerminator
+    let appTerminationDelay = self.appTerminationDelay
 
-    return .fireAndForget {
+    return .run { _ in
       if let url {
         await openURL(url)
       }
 
       if terminatesApp {
+        await appTerminationDelay()
         await appTerminator()
       }
     }

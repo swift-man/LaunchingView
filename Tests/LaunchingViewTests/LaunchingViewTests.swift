@@ -98,6 +98,7 @@ struct LaunchingViewTests {
     store.dependencies.appTerminator = AppTerminator {
       await recorder.terminate()
     }
+    store.dependencies.appTerminationDelay = AppTerminationDelay {}
 
     await store.send(.optionalUpdateAlertDoneTapped(appStoreURL: actionURL)).finish()
 
@@ -128,6 +129,7 @@ struct LaunchingViewTests {
     store.dependencies.appTerminator = AppTerminator {
       await recorder.terminate()
     }
+    store.dependencies.appTerminationDelay = AppTerminationDelay {}
 
     await store.send(.forceUpdateAlertDismissed).finish()
 
@@ -159,6 +161,7 @@ struct LaunchingViewTests {
     store.dependencies.appTerminator = AppTerminator {
       await recorder.terminate()
     }
+    store.dependencies.appTerminationDelay = AppTerminationDelay {}
 
     await store.send(.noticeAlertDismissed).finish()
 

@@ -25,7 +25,6 @@ struct AppTerminator: Sendable {
 @available(watchOS, unavailable)
 private enum AppTerminatorKey: DependencyKey {
   static let liveValue = AppTerminator {
-    try? await Task.sleep(nanoseconds: 200_000_000)
     Darwin.exit(0)
   }
 
