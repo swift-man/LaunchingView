@@ -14,12 +14,24 @@ import SwiftUI
 public struct SharedURL: Sendable {
   public static let shared = SharedURL()
   private init() {}
-  
+
+  @available(
+    *,
+    deprecated,
+    message: "Prefer SwiftUI's @Environment(\\.openURL) or TCA's @Dependency(\\.openURL)."
+  )
   public func open(_ url: URL) {
-#if os(iOS)
+    Task { @MainActor in
+      #if os(iOS)
         UIApplication.shared.open(url)
-#else
+      #elseif os(macOS)
         NSWorkspace.shared.open(url)
-#endif
+      #endif
+    }
+  }
+
+  @MainActor
+  public func open(_ url: URL, using openURL: OpenURLAction) {
+    openURL(url)
   }
 }
