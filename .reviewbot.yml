@@ -4,8 +4,6 @@ review:
   include:
     - "**/*.swift"
     - "Package.swift"
-    - "Project.swift"
-    - "Tuist/**/*.swift"
     - "**/Info.plist"
     - ".github/workflows/**/*.yml"
     - ".github/workflows/**/*.yaml"
@@ -77,7 +75,6 @@ review:
     - "pnpm-lock.yaml"
 
     # docs / generated DocC output
-    - "CHANGELOG.md"
     - "docs/**"
     - "**/*.doccarchive/**"
 
@@ -88,8 +85,6 @@ review:
     - "README.md"
     - "GeneratingDocumentationSite"
     - "Package.swift"
-    - "Project.swift"
-    - "Tuist/**/*.swift"
     - ".github/workflows/**/*.yml"
     - ".github/workflows/**/*.yaml"
     - "Sources/**/*.docc/**/*.md"
