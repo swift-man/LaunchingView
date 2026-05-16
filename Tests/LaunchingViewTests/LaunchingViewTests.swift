@@ -1,3 +1,5 @@
+import ComposableArchitecture
+import LaunchingService
 import SwiftUI
 import Testing
 @testable import LaunchingView
@@ -70,5 +72,117 @@ struct LaunchingViewTests {
     #expect(defaultText.forceUpdate.done == "Update")
     #expect(defaultText.optionalUpdate.cancel == "Later")
     #expect(defaultText.notice.done == "Open")
+  }
+
+  @Test
+  func optionalUpdateDoneOpensUpdateURL() async {
+    let url = URL(string: "https://example.com/optional")!
+    let recorder = ExternalActionRecorder()
+    let store = TestStore(
+      initialState: Launching.State(
+        appUpdateStatus: .optionalUpdateRequired(
+          UpdateAlert(
+            title: "",
+            message: "",
+            alertDoneLinkURL: url
+          )
+        )
+      ),
+      reducer: Launching()
+    )
+    store.dependencies.openURL = OpenURLEffect { url in
+      await recorder.open(url)
+      return true
+    }
+    store.dependencies.appTerminator = AppTerminator {
+      await recorder.terminate()
+    }
+
+    await store.send(.optionalUpdateAlertDoneTapped(appStoreURL: url)).finish()
+
+    #expect(await recorder.openedURLs() == [url])
+    #expect(await recorder.terminateCount() == 0)
+  }
+
+  @Test
+  func forceUpdateDismissalOpensURLAndTerminatesApp() async {
+    let url = URL(string: "https://example.com/force")!
+    let recorder = ExternalActionRecorder()
+    let store = TestStore(
+      initialState: Launching.State(
+        appUpdateStatus: .forcedUpdateRequired(
+          UpdateAlert(
+            title: "",
+            message: "",
+            alertDoneLinkURL: url
+          )
+        )
+      ),
+      reducer: Launching()
+    )
+    store.dependencies.openURL = OpenURLEffect { url in
+      await recorder.open(url)
+      return true
+    }
+    store.dependencies.appTerminator = AppTerminator {
+      await recorder.terminate()
+    }
+
+    await store.send(.forceUpdateAlertDismissed).finish()
+
+    #expect(await recorder.openedURLs() == [url])
+    #expect(await recorder.terminateCount() == 1)
+  }
+
+  @Test
+  func terminatingNoticeDismissalOpensURLAndTerminatesApp() async {
+    let url = URL(string: "https://example.com/notice")!
+    let recorder = ExternalActionRecorder()
+    let store = TestStore(
+      initialState: Launching.State(
+        appUpdateStatus: .notice(
+          NoticeAlert(
+            title: "",
+            message: "",
+            isAppTerminated: true,
+            doneURL: url
+          )
+        )
+      ),
+      reducer: Launching()
+    )
+    store.dependencies.openURL = OpenURLEffect { url in
+      await recorder.open(url)
+      return true
+    }
+    store.dependencies.appTerminator = AppTerminator {
+      await recorder.terminate()
+    }
+
+    await store.send(.noticeAlertDismissed).finish()
+
+    #expect(await recorder.openedURLs() == [url])
+    #expect(await recorder.terminateCount() == 1)
+  }
+}
+
+private actor ExternalActionRecorder {
+  private var urls: [URL] = []
+  private var terminations = 0
+
+  func open(_ url: URL) {
+    urls.append(url)
+  }
+
+  func terminate() {
+    terminations += 1
+  }
+
+  func openedURLs() -> [URL] {
+    urls
+  }
+
+  func terminateCount() -> Int {
+    terminations
   }
 }

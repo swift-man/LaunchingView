@@ -62,6 +62,12 @@ struct Launching: ReducerProtocol {
   
   @Dependency(\.launchingAlertDefaultText)
   var launchingAlertDefaultText
+
+  @Dependency(\.openURL)
+  var openURL
+
+  @Dependency(\.appTerminator)
+  var appTerminator
   
   func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
     switch action {
@@ -85,12 +91,10 @@ struct Launching: ReducerProtocol {
         return .none
         
       case .forcedUpdateRequired(let updateAlert):
-        SharedURL.shared.open(updateAlert.alertDoneLinkURL)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
-          exit(0)
-        })
-        return .none
+        return performExternalAction(
+          url: updateAlert.alertDoneLinkURL,
+          terminatesApp: true
+        )
       }
       
     case .optionalUpdateAlertDismissed:
@@ -105,8 +109,7 @@ struct Launching: ReducerProtocol {
         return .none
         
       case .optionalUpdateRequired(let updateAlert):
-        SharedURL.shared.open(updateAlert.alertDoneLinkURL)
-        return .none
+        return performExternalAction(url: updateAlert.alertDoneLinkURL)
       }
       
     case .setAppUpdateStatus(let appVersionStatus):
@@ -184,16 +187,30 @@ struct Launching: ReducerProtocol {
         return .none
         
       case .notice(let noticeAlert):
-        if let url = noticeAlert.doneURL {
-          SharedURL.shared.open(url)
-        }
-        
-        if noticeAlert.isAppTerminated {
-          DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: {
-            exit(0)
-          })
-        }
-        return .none
+        return performExternalAction(
+          url: noticeAlert.doneURL,
+          terminatesApp: noticeAlert.isAppTerminated
+        )
+      }
+    }
+  }
+
+  private func performExternalAction(
+    url: URL?,
+    terminatesApp: Bool = false
+  ) -> EffectTask<Action> {
+    guard url != nil || terminatesApp else { return .none }
+
+    let openURL = self.openURL
+    let appTerminator = self.appTerminator
+
+    return .fireAndForget {
+      if let url {
+        await openURL(url)
+      }
+
+      if terminatesApp {
+        await appTerminator()
       }
     }
   }

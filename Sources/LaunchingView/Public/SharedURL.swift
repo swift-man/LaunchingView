@@ -16,10 +16,8 @@ public struct SharedURL: Sendable {
   private init() {}
   
   public func open(_ url: URL) {
-#if os(iOS)
-        UIApplication.shared.open(url)
-#else
-        NSWorkspace.shared.open(url)
-#endif
+    Task { @MainActor in
+      EnvironmentValues().openURL(url)
+    }
   }
 }
