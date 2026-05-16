@@ -75,8 +75,9 @@ struct LaunchingViewTests {
   }
 
   @Test
-  func optionalUpdateDoneOpensUpdateURL() async {
-    let url = URL(string: "https://example.com/optional")!
+  func optionalUpdateDoneOpensActionURL() async {
+    let stateURL = URL(string: "https://example.com/state-optional")!
+    let actionURL = URL(string: "https://example.com/action-optional")!
     let recorder = ExternalActionRecorder()
     let store = TestStore(
       initialState: Launching.State(
@@ -84,7 +85,7 @@ struct LaunchingViewTests {
           UpdateAlert(
             title: "",
             message: "",
-            alertDoneLinkURL: url
+            alertDoneLinkURL: stateURL
           )
         )
       ),
@@ -98,9 +99,9 @@ struct LaunchingViewTests {
       await recorder.terminate()
     }
 
-    await store.send(.optionalUpdateAlertDoneTapped(appStoreURL: url)).finish()
+    await store.send(.optionalUpdateAlertDoneTapped(appStoreURL: actionURL)).finish()
 
-    #expect(await recorder.openedURLs() == [url])
+    #expect(await recorder.openedURLs() == [actionURL])
     #expect(await recorder.terminateCount() == 0)
   }
 

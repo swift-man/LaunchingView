@@ -101,15 +101,13 @@ struct Launching: ReducerProtocol {
       state.optionalUpdateAlert = nil
       return .none
       
-    case .optionalUpdateAlertDoneTapped:
-      guard let appUpdateStatus = state.appUpdateStatus else { return .none }
-      
-      switch appUpdateStatus {
-      case .valid, .forcedUpdateRequired, .notice:
+    case .optionalUpdateAlertDoneTapped(let appStoreURL):
+      switch state.appUpdateStatus {
+      case .valid, .forcedUpdateRequired, .notice, nil:
         return .none
         
-      case .optionalUpdateRequired(let updateAlert):
-        return performExternalAction(url: updateAlert.alertDoneLinkURL)
+      case .optionalUpdateRequired:
+        return performExternalAction(url: appStoreURL)
       }
       
     case .setAppUpdateStatus(let appVersionStatus):
