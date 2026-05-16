@@ -118,7 +118,10 @@ struct LaunchingViewTests {
             message: "",
             alertDoneLinkURL: url
           )
-        )
+        ),
+        forceUpdateAlert: AlertState {
+          TextState("Force update")
+        }
       ),
       reducer: Launching()
     )
@@ -131,7 +134,9 @@ struct LaunchingViewTests {
     }
     store.dependencies.appTerminationDelay = AppTerminationDelay {}
 
-    await store.send(.forceUpdateAlertDismissed).finish()
+    await store.send(.forceUpdateAlertDismissed) {
+      $0.forceUpdateAlert = nil
+    }.finish()
 
     #expect(await recorder.openedURLs() == [url])
     #expect(await recorder.terminateCount() == 1)

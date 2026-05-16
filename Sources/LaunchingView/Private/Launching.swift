@@ -87,6 +87,7 @@ struct Launching: ReducerProtocol {
         }
       }
     case .forceUpdateAlertDismissed:
+      state.forceUpdateAlert = nil
       guard let appUpdateStatus = state.appUpdateStatus else { return .none }
       
       switch appUpdateStatus {
