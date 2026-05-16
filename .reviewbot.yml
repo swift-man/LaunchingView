@@ -79,7 +79,6 @@ review:
     # docs / generated DocC output
     - "CHANGELOG.md"
     - "docs/**"
-    - "LaunchingView.doccarchive/**"
     - "**/*.doccarchive/**"
 
   always_review:
