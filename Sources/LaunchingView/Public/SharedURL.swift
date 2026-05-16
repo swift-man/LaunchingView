@@ -22,7 +22,11 @@ public struct SharedURL: Sendable {
   )
   public func open(_ url: URL) {
     Task { @MainActor in
-      EnvironmentValues().openURL(url)
+      #if os(iOS)
+        UIApplication.shared.open(url)
+      #elseif os(macOS)
+        NSWorkspace.shared.open(url)
+      #endif
     }
   }
 
