@@ -11,12 +11,12 @@ import Foundation
 @available(iOS 15.0, macOS 12, *)
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
-public struct LaunchingAlertDefaultText {
+public struct LaunchingAlertDefaultText: Sendable {
   
   @available(iOS 15.0, macOS 12, *)
   @available(tvOS, unavailable)
   @available(watchOS, unavailable)
-  public struct ForceUpdate {
+  public struct ForceUpdate: Sendable {
     let title: String
     let message: String
     let done: String
@@ -33,7 +33,7 @@ public struct LaunchingAlertDefaultText {
   @available(iOS 15.0, macOS 12, *)
   @available(tvOS, unavailable)
   @available(watchOS, unavailable)
-  public struct OptionalUpdate {
+  public struct OptionalUpdate: Sendable {
     let title: String
     let message: String
     let cancel: String
@@ -53,7 +53,7 @@ public struct LaunchingAlertDefaultText {
   @available(iOS 15.0, macOS 12, *)
   @available(tvOS, unavailable)
   @available(watchOS, unavailable)
-  public struct Notice {
+  public struct Notice: Sendable {
     let title: String
     let message: String
     let cancel: String

@@ -1,4 +1,4 @@
-// swift-tools-version: 5.7
+// swift-tools-version: 6.0
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -16,7 +16,7 @@ let package = Package(
     ],
     dependencies: [
       .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.50.1"),
-      .package(url: "https://github.com/swift-man/LaunchingService", branch: "main"),
+      .package(url: "https://github.com/swift-man/LaunchingService", from: "0.9.0"),
     ],
     targets: [
         .target(
