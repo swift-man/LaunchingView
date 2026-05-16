@@ -11,7 +11,7 @@ import SwiftUI
 @available(iOS 15.0, macOS 12, *)
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
-public struct SharedURL {
+public struct SharedURL: Sendable {
   public static let shared = SharedURL()
   private init() {}
   

@@ -1,9 +1,12 @@
 import SwiftUI
-import XCTest
+import Testing
 @testable import LaunchingView
 
-final class LaunchingViewTests: XCTestCase {
-  func testLaunchingViewInitializesWithDefaultCompletionState() {
+@Suite("LaunchingView")
+@MainActor
+struct LaunchingViewTests {
+  @Test
+  func launchingViewInitializesWithDefaultCompletionState() {
     let view = LaunchingView(
       content: {
         Text("Content")
@@ -13,10 +16,11 @@ final class LaunchingViewTests: XCTestCase {
       }
     )
 
-    XCTAssertFalse(String(describing: type(of: view)).isEmpty)
+    #expect(!String(describing: type(of: view)).isEmpty)
   }
 
-  func testLaunchingViewInitializesWithCustomCompletionState() {
+  @Test
+  func launchingViewInitializesWithCustomCompletionState() {
     let view = LaunchingView(
       content: {
         Text("Content")
@@ -27,18 +31,20 @@ final class LaunchingViewTests: XCTestCase {
       isFinished: .constant(false)
     )
 
-    XCTAssertFalse(String(describing: type(of: view)).isEmpty)
+    #expect(!String(describing: type(of: view)).isEmpty)
   }
 
-  func testAsyncLaunchingViewInitializes() {
+  @Test
+  func asyncLaunchingViewInitializes() {
     let view = AsyncLaunchingView {
       Text("Content")
     }
 
-    XCTAssertFalse(String(describing: type(of: view)).isEmpty)
+    #expect(!String(describing: type(of: view)).isEmpty)
   }
 
-  func testLaunchingAlertDefaultTextCanBeCustomized() {
+  @Test
+  func launchingAlertDefaultTextCanBeCustomized() {
     let defaultText = LaunchingAlertDefaultText(
       forceUpdate: .init(
         title: "Force update",
@@ -59,10 +65,10 @@ final class LaunchingViewTests: XCTestCase {
       )
     )
 
-    XCTAssertEqual(defaultText.forceUpdate.title, "Force update")
-    XCTAssertEqual(defaultText.forceUpdate.message, "Please update now")
-    XCTAssertEqual(defaultText.forceUpdate.done, "Update")
-    XCTAssertEqual(defaultText.optionalUpdate.cancel, "Later")
-    XCTAssertEqual(defaultText.notice.done, "Open")
+    #expect(defaultText.forceUpdate.title == "Force update")
+    #expect(defaultText.forceUpdate.message == "Please update now")
+    #expect(defaultText.forceUpdate.done == "Update")
+    #expect(defaultText.optionalUpdate.cancel == "Later")
+    #expect(defaultText.notice.done == "Open")
   }
 }

@@ -12,8 +12,8 @@ import LaunchingService
 @available(iOS 15.0, macOS 12, *)
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
-extension LaunchingService: DependencyKey {
-   public static var liveValue = LaunchingService()
+extension LaunchingService: @retroactive DependencyKey {
+  public static let liveValue = LaunchingService()
 }
 
 @available(iOS 15.0, macOS 12, *)
