@@ -12,10 +12,10 @@ import Foundation
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 struct AppTerminationDelay: Sendable {
-  var sleep: @Sendable () async -> Void
+  var sleep: @Sendable () async throws -> Void
 
-  func callAsFunction() async {
-    await sleep()
+  func callAsFunction() async throws {
+    try await sleep()
   }
 }
 
@@ -24,7 +24,7 @@ struct AppTerminationDelay: Sendable {
 @available(watchOS, unavailable)
 private enum AppTerminationDelayKey: DependencyKey {
   static let liveValue = AppTerminationDelay {
-    try? await Task.sleep(nanoseconds: 200_000_000)
+    try await Task.sleep(nanoseconds: 200_000_000)
   }
 
   static let testValue = AppTerminationDelay {

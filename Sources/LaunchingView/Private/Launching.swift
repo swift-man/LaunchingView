@@ -213,7 +213,7 @@ struct Launching: ReducerProtocol {
       }
 
       if terminatesApp {
-        await appTerminationDelay()
+        try await appTerminationDelay()
         await appTerminator()
       }
     }
