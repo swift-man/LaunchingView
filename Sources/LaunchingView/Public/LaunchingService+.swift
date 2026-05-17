@@ -9,7 +9,7 @@ import Foundation
 import Dependencies
 import LaunchingService
 
-@available(iOS 15.0, macOS 12, *)
+@available(iOS 16.0, macOS 13, *)
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 private enum LaunchingServiceKey: DependencyKey {
@@ -17,7 +17,7 @@ private enum LaunchingServiceKey: DependencyKey {
   public static let testValue: any LaunchingInteractable = UnimplementedLaunchingService()
 }
 
-@available(iOS 15.0, macOS 12, *)
+@available(iOS 16.0, macOS 13, *)
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 private final class UnimplementedLaunchingService: LaunchingInteractable {
@@ -28,7 +28,7 @@ private final class UnimplementedLaunchingService: LaunchingInteractable {
   }
 }
 
-@available(iOS 15.0, macOS 12, *)
+@available(iOS 16.0, macOS 13, *)
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 extension DependencyValues {

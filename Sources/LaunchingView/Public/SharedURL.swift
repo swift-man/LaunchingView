@@ -8,7 +8,7 @@
 import SwiftUI
 
 /// Open URL macOS and iOS
-@available(iOS 15.0, macOS 12, *)
+@available(iOS 16.0, macOS 13, *)
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 public struct SharedURL: Sendable {

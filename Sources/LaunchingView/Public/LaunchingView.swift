@@ -53,11 +53,12 @@ import SwiftUI
 ///         }
 ///       }
 ///     }
-@available(iOS 15.0, macOS 12, *)
+@available(iOS 16.0, macOS 13, *)
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 public struct LaunchingView<Content: View, LaunchScreen: View>: View {
-  private let store: StoreOf<Launching>
+  @State
+  private var store: StoreOf<Launching>
   
   private let contentView: () -> Content
   private let launchScreen: () -> LaunchScreen
@@ -83,51 +84,61 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
     self.contentView = content
     self.launchScreen = launchScreen
     self._isUserCustomFlagFinished = isFinished
-    self.store = Store(
-      initialState: Launching.State(),
-      reducer: Launching()
+    self._store = State(
+      wrappedValue: Store(initialState: Launching.State()) {
+        Launching()
+      }
     )
   }
   
   public var body: some View {
-    WithViewStore(self.store, observe: { $0 }) { viewStore in
-      Group {
-        if let blockingAlert = viewStore.blockingAlert {
-          BlockingLaunchView(
-            title: blockingAlert.title,
-            message: blockingAlert.message,
-            buttonTitle: blockingAlert.buttonTitle,
-            linkURL: blockingAlert.linkURL,
-            onButtonTapped: { linkURL in
-              viewStore.send(.blockingAlertButtonTapped(linkURL: linkURL))
-            }
+    WithPerceptionTracking {
+      @Perception.Bindable var store = store
+
+      launchContent(store: store)
+        .onChange(of: scenePhase, perform: handleScenePhaseChange)
+        .alert($store.scope(state: \.optionalUpdateAlert, action: \.optionalUpdateAlert))
+        .alert(
+          $store.scope(
+            state: \.appUpdateFetchErrorAlert,
+            action: \.appUpdateFetchErrorAlert
           )
-        } else if viewStore.displayContentView && isUserCustomFlagFinished {
-          contentView()
-        } else {
-          launchScreen()
-            .onAppear {
-              viewStore.send(.fetchAppUpdateStatus)
-            }
-        }
-      }
-      .onChange(of: scenePhase) { newValue in
-        if newValue == .active {
-          viewStore.send(.fetchAppUpdateStatus)
-        }
-      }
+        )
+        .alert($store.scope(state: \.noticeAlert, action: \.noticeAlert))
     }
-    .alert(
-      self.store.scope(state: \.optionalUpdateAlert),
-      dismiss: .optionalUpdateAlertDismissed
+  }
+
+  @ViewBuilder
+  private func launchContent(store: StoreOf<Launching>) -> some View {
+    if let blockingAlert = store.blockingAlert {
+      blockingLaunchView(blockingAlert, store: store)
+    } else if store.displayContentView && isUserCustomFlagFinished {
+      contentView()
+    } else {
+      launchScreen()
+        .onAppear {
+          store.send(.fetchAppUpdateStatus)
+        }
+    }
+  }
+
+  private func blockingLaunchView(
+    _ blockingAlert: Launching.State.BlockingAlert,
+    store: StoreOf<Launching>
+  ) -> BlockingLaunchView {
+    BlockingLaunchView(
+      title: blockingAlert.title,
+      message: blockingAlert.message,
+      buttonTitle: blockingAlert.buttonTitle,
+      linkURL: blockingAlert.linkURL,
+      onButtonTapped: { linkURL in
+        store.send(.blockingAlertButtonTapped(linkURL: linkURL))
+      }
     )
-    .alert(
-      self.store.scope(state: \.appUpdateFetchErrorAlert),
-      dismiss: .appUpdateFetchErrorAlertDismissed
-    )
-    .alert(
-      self.store.scope(state: \.noticeAlert),
-      dismiss: .noticeAlertDismissed
-    )
+  }
+
+  private func handleScenePhaseChange(_ scenePhase: ScenePhase) {
+    guard scenePhase == .active else { return }
+    store.send(.fetchAppUpdateStatus)
   }
 }

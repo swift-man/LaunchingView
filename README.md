@@ -6,8 +6,8 @@ This is a SwiftUI view based on [The Composable Architecture](https://github.com
 ![Badge](https://img.shields.io/badge/SwiftUI-001b87.svg?style=flat-square&logo=Swift&logoColor=black)
 ![Badge - Version](https://img.shields.io/badge/Version-0.9.1-1177AA?style=flat-square)
 ![Badge - Swift Package Manager](https://img.shields.io/badge/SPM-compatible-orange?style=flat-square)
-![Badge - Platform](https://img.shields.io/badge/macOS-v12.0-yellow?style=flat-square)
-![Badge - Platform](https://img.shields.io/badge/iOS-v15.0-yellow?style=flat-square)
+![Badge - Platform](https://img.shields.io/badge/macOS-v13.0-yellow?style=flat-square)
+![Badge - Platform](https://img.shields.io/badge/iOS-v16.0-yellow?style=flat-square)
 ![Badge - License](https://img.shields.io/badge/license-MIT-black?style=flat-square)
 
 ---
