@@ -8,12 +8,12 @@
 import ComposableArchitecture
 import SwiftUI
 
-@available(iOS 15.0, macOS 12, *)
+@available(iOS 16.0, macOS 13, *)
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 public struct AsyncLaunchingView<Content: View>: View {
-  @StateObject
-  private var viewStore: ViewStore<Launching.State, Launching.Action>
+  @State
+  private var store: StoreOf<Launching>
   
   private let contentView: () -> Content
   
@@ -27,60 +27,45 @@ public struct AsyncLaunchingView<Content: View>: View {
   ///   - content: The callback that SwiftUI contentView
   public init(@ViewBuilder content: @escaping () -> Content) {
     self.contentView = content
-    self._viewStore = StateObject(
-      wrappedValue: ViewStore(
-        Store(initialState: Launching.State()) {
-          Launching()
-        },
-        observe: { $0 }
-      )
+    self._store = State(
+      wrappedValue: Store(initialState: Launching.State()) {
+        Launching()
+      }
     )
   }
   
   public var body: some View {
-    launchContent(viewStore: viewStore)
-      .onChange(of: scenePhase, perform: handleScenePhaseChange)
-      .alert(optionalUpdateAlertBinding, action: handleAlertAction)
-      .alert(appUpdateFetchErrorAlertBinding, action: handleAlertAction)
-      .alert(noticeAlertBinding, action: handleAlertAction)
-  }
+    WithPerceptionTracking {
+      @Perception.Bindable var store = store
 
-  private var optionalUpdateAlertBinding: Binding<AlertState<Launching.Action>?> {
-    viewStore.binding(
-      get: { $0.optionalUpdateAlert },
-      send: .optionalUpdateAlertDismissed
-    )
-  }
-
-  private var appUpdateFetchErrorAlertBinding: Binding<AlertState<Launching.Action>?> {
-    viewStore.binding(
-      get: { $0.appUpdateFetchErrorAlert },
-      send: .appUpdateFetchErrorAlertDismissed
-    )
-  }
-
-  private var noticeAlertBinding: Binding<AlertState<Launching.Action>?> {
-    viewStore.binding(
-      get: { $0.noticeAlert },
-      send: .noticeAlertDismissed
-    )
+      launchContent(store: store)
+        .onChange(of: scenePhase, perform: handleScenePhaseChange)
+        .alert($store.scope(state: \.optionalUpdateAlert, action: \.optionalUpdateAlert))
+        .alert(
+          $store.scope(
+            state: \.appUpdateFetchErrorAlert,
+            action: \.appUpdateFetchErrorAlert
+          )
+        )
+        .alert($store.scope(state: \.noticeAlert, action: \.noticeAlert))
+    }
   }
 
   @ViewBuilder
-  private func launchContent(viewStore: ViewStore<Launching.State, Launching.Action>) -> some View {
-    if let blockingAlert = viewStore.blockingAlert {
-      blockingLaunchView(blockingAlert, viewStore: viewStore)
+  private func launchContent(store: StoreOf<Launching>) -> some View {
+    if let blockingAlert = store.blockingAlert {
+      blockingLaunchView(blockingAlert, store: store)
     } else {
       contentView()
         .onAppear {
-          viewStore.send(.fetchAppUpdateStatus)
+          store.send(.fetchAppUpdateStatus)
         }
     }
   }
 
   private func blockingLaunchView(
     _ blockingAlert: Launching.State.BlockingAlert,
-    viewStore: ViewStore<Launching.State, Launching.Action>
+    store: StoreOf<Launching>
   ) -> BlockingLaunchView {
     BlockingLaunchView(
       title: blockingAlert.title,
@@ -88,18 +73,13 @@ public struct AsyncLaunchingView<Content: View>: View {
       buttonTitle: blockingAlert.buttonTitle,
       linkURL: blockingAlert.linkURL,
       onButtonTapped: { linkURL in
-        viewStore.send(.blockingAlertButtonTapped(linkURL: linkURL))
+        store.send(.blockingAlertButtonTapped(linkURL: linkURL))
       }
     )
   }
 
   private func handleScenePhaseChange(_ scenePhase: ScenePhase) {
     guard scenePhase == .active else { return }
-    viewStore.send(.fetchAppUpdateStatus)
-  }
-
-  private func handleAlertAction(_ action: Launching.Action?) {
-    guard let action else { return }
-    viewStore.send(action)
+    store.send(.fetchAppUpdateStatus)
   }
 }

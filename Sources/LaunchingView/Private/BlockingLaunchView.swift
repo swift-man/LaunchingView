@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-@available(iOS 15.0, macOS 12, *)
+@available(iOS 16.0, macOS 13, *)
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 struct BlockingLaunchView: View {

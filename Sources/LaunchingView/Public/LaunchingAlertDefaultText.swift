@@ -8,12 +8,12 @@
 import Dependencies
 import Foundation
 
-@available(iOS 15.0, macOS 12, *)
+@available(iOS 16.0, macOS 13, *)
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 public struct LaunchingAlertDefaultText: Sendable {
   
-  @available(iOS 15.0, macOS 12, *)
+  @available(iOS 16.0, macOS 13, *)
   @available(tvOS, unavailable)
   @available(watchOS, unavailable)
   public struct ForceUpdate: Sendable {
@@ -30,7 +30,7 @@ public struct LaunchingAlertDefaultText: Sendable {
     }
   }
   
-  @available(iOS 15.0, macOS 12, *)
+  @available(iOS 16.0, macOS 13, *)
   @available(tvOS, unavailable)
   @available(watchOS, unavailable)
   public struct OptionalUpdate: Sendable {
@@ -50,7 +50,7 @@ public struct LaunchingAlertDefaultText: Sendable {
     }
   }
   
-  @available(iOS 15.0, macOS 12, *)
+  @available(iOS 16.0, macOS 13, *)
   @available(tvOS, unavailable)
   @available(watchOS, unavailable)
   public struct Notice: Sendable {
@@ -83,7 +83,7 @@ public struct LaunchingAlertDefaultText: Sendable {
   }
 }
 
-@available(iOS 15.0, macOS 12, *)
+@available(iOS 16.0, macOS 13, *)
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 extension LaunchingAlertDefaultText: TestDependencyKey {
@@ -92,7 +92,7 @@ extension LaunchingAlertDefaultText: TestDependencyKey {
   }
 }
 
-@available(iOS 15.0, macOS 12, *)
+@available(iOS 16.0, macOS 13, *)
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 extension DependencyValues {

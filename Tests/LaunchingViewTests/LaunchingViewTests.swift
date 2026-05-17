@@ -88,7 +88,14 @@ struct LaunchingViewTests {
             message: "",
             alertDoneLinkURL: stateURL
           )
-        )
+        ),
+        optionalUpdateAlert: AlertState {
+          TextState("Optional update")
+        } actions: {
+          ButtonState(action: .doneTapped(appStoreURL: actionURL)) {
+            TextState("Update")
+          }
+        }
       )
     ) {
       Launching()
@@ -98,7 +105,11 @@ struct LaunchingViewTests {
       return true
     }
 
-    await store.send(.optionalUpdateAlertDoneTapped(appStoreURL: actionURL)).finish()
+    await store.send(
+      .optionalUpdateAlert(.presented(.doneTapped(appStoreURL: actionURL)))
+    ) {
+      $0.optionalUpdateAlert = nil
+    }.finish()
 
     #expect(await recorder.openedURLs() == [actionURL])
   }
@@ -211,6 +222,39 @@ struct LaunchingViewTests {
   }
 
   @Test
+  func fetchErrorDismissRequestsRefresh() async {
+    let store = TestStore(
+      initialState: Launching.State(
+        appUpdateFetchErrorAlert: AlertState {
+          TextState("LaunchingView")
+        } message: {
+          TextState("Network failed")
+        }
+      )
+    ) {
+      Launching()
+    }
+    store.dependencies.launchingService = StubLaunchingService(status: .valid)
+
+    await store.send(.appUpdateFetchErrorAlert(.dismiss)) {
+      $0.appUpdateFetchErrorAlert = nil
+    }
+
+    await store.receive(.fetchAppUpdateStatus) {
+      $0.isFetching = true
+    }
+
+    await store.receive(.setAppUpdateStatus(.valid)) {
+      $0.isFetching = false
+      $0.appUpdateStatus = .valid
+      $0.displayContentView = true
+      $0.blockingAlert = nil
+      $0.optionalUpdateAlert = nil
+      $0.noticeAlert = nil
+    }
+  }
+
+  @Test
   func fetchCancellationClearsFetchingWithoutShowingAlert() async {
     let store = TestStore(
       initialState: Launching.State()
@@ -226,6 +270,42 @@ struct LaunchingViewTests {
     await store.receive(.fetchAppUpdateStatusCancelled) {
       $0.isFetching = false
     }
+  }
+
+  @Test
+  func noticeDismissOpensDoneURL() async {
+    let url = URL(string: "https://example.com/notice")!
+    let status = AppUpdateStatus.notice(
+      NoticeAlert(
+        title: "Notice",
+        message: "Please read",
+        isAppTerminated: false,
+        doneURL: url
+      )
+    )
+    let recorder = ExternalActionRecorder()
+    let store = TestStore(
+      initialState: Launching.State(
+        appUpdateStatus: status,
+        noticeAlert: AlertState {
+          TextState("Notice")
+        } message: {
+          TextState("Please read")
+        }
+      )
+    ) {
+      Launching()
+    }
+    store.dependencies.openURL = OpenURLEffect { url in
+      await recorder.open(url)
+      return true
+    }
+
+    await store.send(.noticeAlert(.dismiss)) {
+      $0.noticeAlert = nil
+    }.finish()
+
+    #expect(await recorder.openedURLs() == [url])
   }
 
   @Test

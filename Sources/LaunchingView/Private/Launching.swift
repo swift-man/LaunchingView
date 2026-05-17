@@ -12,6 +12,7 @@ import SwiftUI
 /// Launching은 App 구동을 위한 Request 를 포함한 AppUpdate 상태를 관리합니다.
 struct Launching: Reducer {
   // MARK: - Enums
+  @ObservableState
   struct State: Equatable {
     struct BlockingAlert: Equatable {
       var title: String
@@ -29,24 +30,37 @@ struct Launching: Reducer {
     /// ContentView Display
     var displayContentView = false
     
-    var appUpdateFetchErrorAlert: AlertState<Action>?
+    @Presents var appUpdateFetchErrorAlert: AlertState<Action.AppUpdateFetchErrorAlert>?
     
-    var optionalUpdateAlert: AlertState<Action>?
+    @Presents var optionalUpdateAlert: AlertState<Action.OptionalUpdateAlert>?
     
-    var noticeAlert: AlertState<Action>?
+    @Presents var noticeAlert: AlertState<Action.NoticeAlert>?
 
     var blockingAlert: BlockingAlert?
   }
   
+  @CasePathable
   enum Action: Equatable {
+    @CasePathable
+    enum AppUpdateFetchErrorAlert: Equatable {}
+
+    @CasePathable
+    enum OptionalUpdateAlert: Equatable {
+      case doneTapped(appStoreURL: URL?)
+    }
+
+    @CasePathable
+    enum NoticeAlert: Equatable {}
+
+    case appUpdateFetchErrorAlert(PresentationAction<AppUpdateFetchErrorAlert>)
+
+    case optionalUpdateAlert(PresentationAction<OptionalUpdateAlert>)
+
+    case noticeAlert(PresentationAction<NoticeAlert>)
     
     /// AppUpdateStatus 를 Firebase.RemoteConfig 를 통해 가져옵니다.
     case fetchAppUpdateStatus
     
-    /// Action.fetchAppUpdateStatus 실패 후 Error 얼럿 Dismissed 시 호출되며
-    /// Action.fetchAppUpdateStatus 가 다시 호출 됩니다.
-    case appUpdateFetchErrorAlertDismissed
-
     /// Action.fetchAppUpdateStatus 취소 시 호출되며 진행 상태를 정리합니다.
     case fetchAppUpdateStatusCancelled
     
@@ -56,17 +70,8 @@ struct Launching: Reducer {
     /// 차단 화면의 버튼 선택 시 호출
     case blockingAlertButtonTapped(linkURL: URL?)
     
-    /// 선택 업데이트 얼럿 Dismissed 시 호출
-    case optionalUpdateAlertDismissed
-    
-    /// 선택 업데이트 얼럿의 `업데이트`를 유저가 선택 시 호출
-    case optionalUpdateAlertDoneTapped(appStoreURL: URL?)
-    
     /// Action.fetchAppUpdateState 실패하면 Error Alert를 호출
     case showFetchErrorAlert(errorMessage: String)
-    
-    /// 공지 얼럿 Dismissed 시 호출
-    case noticeAlertDismissed
   }
   
   @Dependency(\.launchingService)
@@ -107,12 +112,10 @@ struct Launching: Reducer {
 
     case .blockingAlertButtonTapped(let linkURL):
       return openExternalURL(linkURL)
-      
-    case .optionalUpdateAlertDismissed:
+
+    case .optionalUpdateAlert(.presented(.doneTapped(let appStoreURL))):
       state.optionalUpdateAlert = nil
-      return .none
-      
-    case .optionalUpdateAlertDoneTapped(let appStoreURL):
+
       switch state.appUpdateStatus {
       case .valid, .forcedUpdateRequired, .notice, nil:
         return .none
@@ -120,6 +123,13 @@ struct Launching: Reducer {
       case .optionalUpdateRequired:
         return openExternalURL(appStoreURL)
       }
+
+    case .optionalUpdateAlert(.dismiss):
+      state.optionalUpdateAlert = nil
+      return .none
+
+    case .optionalUpdateAlert:
+      return .none
       
     case .setAppUpdateStatus(let appVersionStatus):
       state.isFetching = false
@@ -164,7 +174,7 @@ struct Launching: Reducer {
           ButtonState(role: .cancel) {
             TextState(launchingAlertDefaultText.optionalUpdate.cancel)
           }
-          ButtonState(action: .optionalUpdateAlertDoneTapped(appStoreURL: updateAlert.alertDoneLinkURL)) {
+          ButtonState(action: .doneTapped(appStoreURL: updateAlert.alertDoneLinkURL)) {
             TextState(launchingAlertDefaultText.optionalUpdate.done)
           }
         } message: {
@@ -217,11 +227,14 @@ struct Launching: Reducer {
       }
       return .none
       
-    case .appUpdateFetchErrorAlertDismissed:
+    case .appUpdateFetchErrorAlert(.dismiss):
       state.appUpdateFetchErrorAlert = nil
       return .send(.fetchAppUpdateStatus)
-      
-    case .noticeAlertDismissed:
+
+    case .appUpdateFetchErrorAlert:
+      return .none
+
+    case .noticeAlert(.dismiss):
       state.noticeAlert = nil
       
       guard let appUpdateStatus = state.appUpdateStatus else { return .none }
@@ -234,6 +247,9 @@ struct Launching: Reducer {
         guard !noticeAlert.isAppTerminated else { return .none }
         return openExternalURL(noticeAlert.doneURL)
       }
+
+    case .noticeAlert:
+      return .none
     }
   }
 
