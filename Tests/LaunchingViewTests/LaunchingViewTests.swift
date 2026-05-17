@@ -211,6 +211,24 @@ struct LaunchingViewTests {
   }
 
   @Test
+  func fetchCancellationClearsFetchingWithoutShowingAlert() async {
+    let store = TestStore(
+      initialState: Launching.State()
+    ) {
+      Launching()
+    }
+    store.dependencies.launchingService = CancellingLaunchingService()
+
+    await store.send(.fetchAppUpdateStatus) {
+      $0.isFetching = true
+    }
+
+    await store.receive(.fetchAppUpdateStatusCancelled) {
+      $0.isFetching = false
+    }
+  }
+
+  @Test
   func fetchWhileFetchingRefreshesAgainAfterCurrentStatusFinishes() async {
     let url = URL(string: "https://example.com/force")!
     let forceStatus = AppUpdateStatus.forcedUpdateRequired(
@@ -271,6 +289,12 @@ private final class StubLaunchingService: LaunchingInteractable {
 
   func fetchAppUpdateStatus() async throws -> AppUpdateStatus {
     status
+  }
+}
+
+private final class CancellingLaunchingService: LaunchingInteractable {
+  func fetchAppUpdateStatus() async throws -> AppUpdateStatus {
+    throw CancellationError()
   }
 }
 

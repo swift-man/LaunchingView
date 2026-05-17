@@ -27,12 +27,14 @@ public struct AsyncLaunchingView<Content: View>: View {
   ///   - content: The callback that SwiftUI contentView
   public init(@ViewBuilder content: @escaping () -> Content) {
     self.contentView = content
-    let store = Store(
-      initialState: Launching.State()
-    ) {
-      Launching()
-    }
-    self._viewStore = StateObject(wrappedValue: ViewStore(store, observe: { $0 }))
+    self._viewStore = StateObject(
+      wrappedValue: ViewStore(
+        Store(initialState: Launching.State()) {
+          Launching()
+        },
+        observe: { $0 }
+      )
+    )
   }
   
   public var body: some View {

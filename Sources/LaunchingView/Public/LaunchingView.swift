@@ -84,12 +84,14 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
     self.contentView = content
     self.launchScreen = launchScreen
     self._isUserCustomFlagFinished = isFinished
-    let store = Store(
-      initialState: Launching.State()
-    ) {
-      Launching()
-    }
-    self._viewStore = StateObject(wrappedValue: ViewStore(store, observe: { $0 }))
+    self._viewStore = StateObject(
+      wrappedValue: ViewStore(
+        Store(initialState: Launching.State()) {
+          Launching()
+        },
+        observe: { $0 }
+      )
+    )
   }
   
   public var body: some View {

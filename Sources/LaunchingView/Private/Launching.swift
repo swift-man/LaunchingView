@@ -46,6 +46,9 @@ struct Launching: Reducer {
     /// Action.fetchAppUpdateStatus 실패 후 Error 얼럿 Dismissed 시 호출되며
     /// Action.fetchAppUpdateStatus 가 다시 호출 됩니다.
     case appUpdateFetchErrorAlertDismissed
+
+    /// Action.fetchAppUpdateStatus 취소 시 호출되며 진행 상태를 정리합니다.
+    case fetchAppUpdateStatusCancelled
     
     /// Action.fetchAppUpdateStatus 를 통해 AppUpdateStatus 를 세팅합니다.
     case setAppUpdateStatus(AppUpdateStatus)
@@ -89,10 +92,18 @@ struct Launching: Reducer {
         do {
           let appStatus = try await launchingService.fetchAppUpdateStatus()
           await send(.setAppUpdateStatus(appStatus))
+        } catch is CancellationError {
+          await send(.fetchAppUpdateStatusCancelled)
         } catch {
           await send(.showFetchErrorAlert(errorMessage: error.localizedDescription))
         }
       }
+
+    case .fetchAppUpdateStatusCancelled:
+      state.isFetching = false
+      let hasPendingFetch = state.hasPendingFetch
+      state.hasPendingFetch = false
+      return fetchAgainIfNeeded(hasPendingFetch)
 
     case .blockingAlertButtonTapped(let linkURL):
       return openExternalURL(linkURL)
