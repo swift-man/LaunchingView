@@ -182,7 +182,7 @@ struct LaunchingViewTests {
   }
 
   @Test
-  func fetchWhileFetchingMarksPendingRefresh() {
+  func fetchWhileFetchingRefreshesAgainAfterCurrentStatusFinishes() async {
     let url = URL(string: "https://example.com/force")!
     let forceStatus = AppUpdateStatus.forcedUpdateRequired(
       UpdateAlert(
@@ -191,33 +191,56 @@ struct LaunchingViewTests {
         alertDoneLinkURL: url
       )
     )
-    var state = Launching.State(isFetching: true)
-    let reducer = Launching()
+    let store = TestStore(
+      initialState: Launching.State(isFetching: true),
+      reducer: Launching()
+    )
+    store.dependencies.launchingAlertDefaultText = LaunchingAlertDefaultText(
+      forceUpdate: .init(done: "Update")
+    )
+    store.dependencies.launchingService = StubLaunchingService(status: .valid)
 
-    _ = reducer.reduce(into: &state, action: .fetchAppUpdateStatus)
-
-    #expect(state.hasPendingFetch)
-
-    withDependencies {
-      $0.launchingAlertDefaultText = LaunchingAlertDefaultText(
-        forceUpdate: .init(done: "Update")
-      )
-    } operation: {
-      _ = reducer.reduce(into: &state, action: .setAppUpdateStatus(forceStatus))
+    await store.send(.fetchAppUpdateStatus) {
+      $0.hasPendingFetch = true
     }
 
-    #expect(!state.isFetching)
-    #expect(!state.hasPendingFetch)
-    #expect(state.appUpdateStatus == forceStatus)
-    #expect(state.displayContentView == false)
-    #expect(
-      state.blockingAlert == Launching.State.BlockingAlert(
+    await store.send(.setAppUpdateStatus(forceStatus)) {
+      $0.isFetching = false
+      $0.hasPendingFetch = false
+      $0.appUpdateStatus = forceStatus
+      $0.displayContentView = false
+      $0.blockingAlert = Launching.State.BlockingAlert(
         title: "Force update",
         message: "Please update now",
         buttonTitle: "Update",
         linkURL: url
       )
-    )
+    }
+
+    await store.receive(.fetchAppUpdateStatus) {
+      $0.isFetching = true
+    }
+
+    await store.receive(.setAppUpdateStatus(.valid)) {
+      $0.isFetching = false
+      $0.appUpdateStatus = .valid
+      $0.displayContentView = true
+      $0.blockingAlert = nil
+      $0.optionalUpdateAlert = nil
+      $0.noticeAlert = nil
+    }
+  }
+}
+
+private final class StubLaunchingService: LaunchingInteractable {
+  private let status: AppUpdateStatus
+
+  init(status: AppUpdateStatus) {
+    self.status = status
+  }
+
+  func fetchAppUpdateStatus() async throws -> AppUpdateStatus {
+    status
   }
 }
 
