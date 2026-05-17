@@ -1,4 +1,5 @@
 import ComposableArchitecture
+import Foundation
 import LaunchingService
 import SwiftUI
 import Testing
@@ -95,103 +96,139 @@ struct LaunchingViewTests {
       await recorder.open(url)
       return true
     }
-    store.dependencies.appTerminator = AppTerminator {
-      await recorder.terminate()
-    }
-    store.dependencies.appTerminationDelay = AppTerminationDelay {}
 
     await store.send(.optionalUpdateAlertDoneTapped(appStoreURL: actionURL)).finish()
 
     #expect(await recorder.openedURLs() == [actionURL])
-    #expect(await recorder.terminateCount() == 0)
   }
 
   @Test
-  func forceUpdateDismissalOpensURLAndTerminatesApp() async {
+  func forceUpdateShowsBlockingViewAndOpensURL() async {
     let url = URL(string: "https://example.com/force")!
+    let status = AppUpdateStatus.forcedUpdateRequired(
+      UpdateAlert(
+        title: "Force update",
+        message: "Please update now",
+        alertDoneLinkURL: url
+      )
+    )
     let recorder = ExternalActionRecorder()
     let store = TestStore(
-      initialState: Launching.State(
-        appUpdateStatus: .forcedUpdateRequired(
-          UpdateAlert(
-            title: "",
-            message: "",
-            alertDoneLinkURL: url
-          )
-        ),
-        forceUpdateAlert: AlertState {
-          TextState("Force update")
-        }
-      ),
+      initialState: Launching.State(displayContentView: true),
       reducer: Launching()
+    )
+    store.dependencies.launchingAlertDefaultText = LaunchingAlertDefaultText(
+      forceUpdate: .init(done: "Update")
     )
     store.dependencies.openURL = OpenURLEffect { url in
       await recorder.open(url)
       return true
     }
-    store.dependencies.appTerminator = AppTerminator {
-      await recorder.terminate()
-    }
-    store.dependencies.appTerminationDelay = AppTerminationDelay {}
 
-    await store.send(.forceUpdateAlertDismissed) {
-      $0.forceUpdateAlert = nil
+    await store.send(.setAppUpdateStatus(status)) {
+      $0.appUpdateStatus = status
+      $0.displayContentView = false
+      $0.blockingAlert = Launching.State.BlockingAlert(
+        title: "Force update",
+        message: "Please update now",
+        buttonTitle: "Update",
+        linkURL: url
+      )
     }.finish()
 
+    await store.send(.blockingAlertButtonTapped(linkURL: url)).finish()
+
     #expect(await recorder.openedURLs() == [url])
-    #expect(await recorder.terminateCount() == 1)
   }
 
   @Test
-  func terminatingNoticeDismissalOpensURLAndTerminatesApp() async {
+  func terminatingNoticeShowsBlockingViewAndOpensURL() async {
     let url = URL(string: "https://example.com/notice")!
+    let status = AppUpdateStatus.notice(
+      NoticeAlert(
+        title: "Notice",
+        message: "Please read",
+        isAppTerminated: true,
+        doneURL: url
+      )
+    )
     let recorder = ExternalActionRecorder()
     let store = TestStore(
-      initialState: Launching.State(
-        appUpdateStatus: .notice(
-          NoticeAlert(
-            title: "",
-            message: "",
-            isAppTerminated: true,
-            doneURL: url
-          )
-        )
-      ),
+      initialState: Launching.State(displayContentView: true),
       reducer: Launching()
+    )
+    store.dependencies.launchingAlertDefaultText = LaunchingAlertDefaultText(
+      notice: .init(done: "Open")
     )
     store.dependencies.openURL = OpenURLEffect { url in
       await recorder.open(url)
       return true
     }
-    store.dependencies.appTerminator = AppTerminator {
-      await recorder.terminate()
-    }
-    store.dependencies.appTerminationDelay = AppTerminationDelay {}
 
-    await store.send(.noticeAlertDismissed).finish()
+    await store.send(.setAppUpdateStatus(status)) {
+      $0.appUpdateStatus = status
+      $0.displayContentView = false
+      $0.blockingAlert = Launching.State.BlockingAlert(
+        title: "Notice",
+        message: "Please read",
+        buttonTitle: "Open",
+        linkURL: url
+      )
+    }.finish()
+
+    await store.send(.blockingAlertButtonTapped(linkURL: url)).finish()
 
     #expect(await recorder.openedURLs() == [url])
-    #expect(await recorder.terminateCount() == 1)
+  }
+
+  @Test
+  func fetchWhileFetchingMarksPendingRefresh() {
+    let url = URL(string: "https://example.com/force")!
+    let forceStatus = AppUpdateStatus.forcedUpdateRequired(
+      UpdateAlert(
+        title: "Force update",
+        message: "Please update now",
+        alertDoneLinkURL: url
+      )
+    )
+    var state = Launching.State(isFetching: true)
+    let reducer = Launching()
+
+    _ = reducer.reduce(into: &state, action: .fetchAppUpdateStatus)
+
+    #expect(state.hasPendingFetch)
+
+    withDependencies {
+      $0.launchingAlertDefaultText = LaunchingAlertDefaultText(
+        forceUpdate: .init(done: "Update")
+      )
+    } operation: {
+      _ = reducer.reduce(into: &state, action: .setAppUpdateStatus(forceStatus))
+    }
+
+    #expect(!state.isFetching)
+    #expect(!state.hasPendingFetch)
+    #expect(state.appUpdateStatus == forceStatus)
+    #expect(state.displayContentView == false)
+    #expect(
+      state.blockingAlert == Launching.State.BlockingAlert(
+        title: "Force update",
+        message: "Please update now",
+        buttonTitle: "Update",
+        linkURL: url
+      )
+    )
   }
 }
 
 private actor ExternalActionRecorder {
   private var urls: [URL] = []
-  private var terminations = 0
 
   func open(_ url: URL) {
     urls.append(url)
   }
 
-  func terminate() {
-    terminations += 1
-  }
-
   func openedURLs() -> [URL] {
     urls
-  }
-
-  func terminateCount() -> Int {
-    terminations
   }
 }

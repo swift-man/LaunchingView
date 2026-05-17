@@ -34,20 +34,30 @@ public struct AsyncLaunchingView<Content: View>: View {
   
   public var body: some View {
     WithViewStore(self.store, observe: { $0 }) { viewStore in
-      contentView()
-        .onAppear {
+      Group {
+        if let blockingAlert = viewStore.blockingAlert {
+          BlockingLaunchView(
+            title: blockingAlert.title,
+            message: blockingAlert.message,
+            buttonTitle: blockingAlert.buttonTitle,
+            linkURL: blockingAlert.linkURL,
+            onButtonTapped: { linkURL in
+              viewStore.send(.blockingAlertButtonTapped(linkURL: linkURL))
+            }
+          )
+        } else {
+          contentView()
+            .onAppear {
+              viewStore.send(.fetchAppUpdateStatus)
+            }
+        }
+      }
+      .onChange(of: scenePhase) { newValue in
+        if newValue == .active {
           viewStore.send(.fetchAppUpdateStatus)
         }
-        .onChange(of: scenePhase) { newValue in
-          if newValue == .active {
-            viewStore.send(.fetchAppUpdateStatus)
-          }
-        }
+      }
     }
-    .alert(
-      self.store.scope(state: \.forceUpdateAlert),
-      dismiss: .forceUpdateAlertDismissed
-    )
     .alert(
       self.store.scope(state: \.optionalUpdateAlert),
       dismiss: .optionalUpdateAlertDismissed

@@ -13,20 +13,29 @@ import SwiftUI
 struct Launching: ReducerProtocol {
   // MARK: - Enums
   struct State: Equatable {
+    struct BlockingAlert: Equatable {
+      var title: String
+      var message: String
+      var buttonTitle: String
+      var linkURL: URL?
+    }
+
     var appUpdateStatus: AppUpdateStatus?
     
     var isFetching = false
+
+    var hasPendingFetch = false
     
     /// ContentView Display
     var displayContentView = false
     
     var appUpdateFetchErrorAlert: AlertState<Action>?
     
-    var forceUpdateAlert: AlertState<Action>?
-    
     var optionalUpdateAlert: AlertState<Action>?
     
     var noticeAlert: AlertState<Action>?
+
+    var blockingAlert: BlockingAlert?
   }
   
   enum Action: Equatable {
@@ -41,8 +50,8 @@ struct Launching: ReducerProtocol {
     /// Action.fetchAppUpdateStatus 를 통해 AppUpdateStatus 를 세팅합니다.
     case setAppUpdateStatus(AppUpdateStatus)
     
-    /// 강제 업데이트 얼럿 Dismissed 시 호출
-    case forceUpdateAlertDismissed
+    /// 차단 화면의 버튼 선택 시 호출
+    case blockingAlertButtonTapped(linkURL: URL?)
     
     /// 선택 업데이트 얼럿 Dismissed 시 호출
     case optionalUpdateAlertDismissed
@@ -65,17 +74,14 @@ struct Launching: ReducerProtocol {
 
   @Dependency(\.openURL)
   var openURL
-
-  @Dependency(\.appTerminator)
-  var appTerminator
-
-  @Dependency(\.appTerminationDelay)
-  var appTerminationDelay
   
   func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
     switch action {
     case .fetchAppUpdateStatus:
-      guard !state.isFetching else { return .none }
+      guard !state.isFetching else {
+        state.hasPendingFetch = true
+        return .none
+      }
       
       state.isFetching = true
       return .task {
@@ -86,20 +92,9 @@ struct Launching: ReducerProtocol {
           return .showFetchErrorAlert(errorMessage: error.localizedDescription)
         }
       }
-    case .forceUpdateAlertDismissed:
-      state.forceUpdateAlert = nil
-      guard let appUpdateStatus = state.appUpdateStatus else { return .none }
-      
-      switch appUpdateStatus {
-      case .valid, .optionalUpdateRequired, .notice:
-        return .none
-        
-      case .forcedUpdateRequired(let updateAlert):
-        return performExternalAction(
-          url: updateAlert.alertDoneLinkURL,
-          terminatesApp: true
-        )
-      }
+
+    case .blockingAlertButtonTapped(let linkURL):
+      return openExternalURL(linkURL)
       
     case .optionalUpdateAlertDismissed:
       state.optionalUpdateAlert = nil
@@ -111,34 +106,45 @@ struct Launching: ReducerProtocol {
         return .none
         
       case .optionalUpdateRequired:
-        return performExternalAction(url: appStoreURL)
+        return openExternalURL(appStoreURL)
       }
       
     case .setAppUpdateStatus(let appVersionStatus):
       state.isFetching = false
+      let hasPendingFetch = state.hasPendingFetch
+      state.hasPendingFetch = false
       state.appUpdateStatus = appVersionStatus
       
       switch appVersionStatus {
       case .valid:
         state.displayContentView = true
-        return .none
+        state.blockingAlert = nil
+        state.optionalUpdateAlert = nil
+        state.noticeAlert = nil
+        return fetchAgainIfNeeded(hasPendingFetch)
         
       case .forcedUpdateRequired(let updateAlert):
         let title = !updateAlert.title.isEmpty ? updateAlert.title : launchingAlertDefaultText.forceUpdate.title
         let message = !updateAlert.message.isEmpty ? updateAlert.message : launchingAlertDefaultText.forceUpdate.message
-        
-        state.forceUpdateAlert = AlertState {
-          TextState(title)
-        } message: {
-          TextState(message)
-        }
-        return .none
+
+        state.displayContentView = false
+        state.optionalUpdateAlert = nil
+        state.noticeAlert = nil
+        state.blockingAlert = State.BlockingAlert(
+          title: title,
+          message: message,
+          buttonTitle: launchingAlertDefaultText.forceUpdate.done,
+          linkURL: updateAlert.alertDoneLinkURL
+        )
+        return fetchAgainIfNeeded(hasPendingFetch)
         
       case .optionalUpdateRequired(let updateAlert):
         let title = !updateAlert.title.isEmpty ? updateAlert.title : launchingAlertDefaultText.optionalUpdate.title
         let message = !updateAlert.message.isEmpty ? updateAlert.message : launchingAlertDefaultText.optionalUpdate.message
         
         state.displayContentView = true
+        state.blockingAlert = nil
+        state.noticeAlert = nil
         state.optionalUpdateAlert = AlertState(
           title: TextState(title),
           message: TextState(message),
@@ -147,26 +153,42 @@ struct Launching: ReducerProtocol {
                                     action: .send(.optionalUpdateAlertDoneTapped(appStoreURL: updateAlert.alertDoneLinkURL)))
         )
         
-        return .none
+        return fetchAgainIfNeeded(hasPendingFetch)
         
       case .notice(let noticeAlert):
         let title = !noticeAlert.title.isEmpty ? noticeAlert.title : launchingAlertDefaultText.notice.title
         let message = !noticeAlert.message.isEmpty ? noticeAlert.message : launchingAlertDefaultText.notice.message
+        state.optionalUpdateAlert = nil
         
-        if !noticeAlert.isAppTerminated {
+        if noticeAlert.isAppTerminated {
+          state.displayContentView = false
+          state.noticeAlert = nil
+          state.blockingAlert = State.BlockingAlert(
+            title: title,
+            message: message,
+            buttonTitle: launchingAlertDefaultText.notice.done,
+            linkURL: noticeAlert.doneURL
+          )
+        } else {
           state.displayContentView = true
+          state.blockingAlert = nil
+          state.noticeAlert = AlertState {
+            TextState(title)
+          } message: {
+            TextState(message)
+          }
         }
-        
-        state.noticeAlert = AlertState {
-          TextState(title)
-        } message: {
-          TextState(message)
-        }
-        return .none
+        return fetchAgainIfNeeded(hasPendingFetch)
       }
       
     case .showFetchErrorAlert(errorMessage: let errorMessage):
       state.isFetching = false
+      let hasPendingFetch = state.hasPendingFetch
+      state.hasPendingFetch = false
+
+      guard !hasPendingFetch else {
+        return .send(.fetchAppUpdateStatus)
+      }
       
       state.appUpdateFetchErrorAlert = AlertState {
         TextState(Bundle.main.displayName)
@@ -189,33 +211,23 @@ struct Launching: ReducerProtocol {
         return .none
         
       case .notice(let noticeAlert):
-        return performExternalAction(
-          url: noticeAlert.doneURL,
-          terminatesApp: noticeAlert.isAppTerminated
-        )
+        guard !noticeAlert.isAppTerminated else { return .none }
+        return openExternalURL(noticeAlert.doneURL)
       }
     }
   }
 
-  private func performExternalAction(
-    url: URL?,
-    terminatesApp: Bool = false
-  ) -> EffectTask<Action> {
-    guard url != nil || terminatesApp else { return .none }
+  private func openExternalURL(_ url: URL?) -> EffectTask<Action> {
+    guard let url else { return .none }
 
     let openURL = self.openURL
-    let appTerminator = self.appTerminator
-    let appTerminationDelay = self.appTerminationDelay
 
     return .run { _ in
-      if let url {
-        await openURL(url)
-      }
-
-      if terminatesApp {
-        try await appTerminationDelay()
-        await appTerminator()
-      }
+      await openURL(url)
     }
+  }
+
+  private func fetchAgainIfNeeded(_ hasPendingFetch: Bool) -> EffectTask<Action> {
+    hasPendingFetch ? .send(.fetchAppUpdateStatus) : .none
   }
 }

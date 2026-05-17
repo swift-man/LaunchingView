@@ -6,6 +6,8 @@ This is a SwiftUI view based on [The Composable Architecture](https://github.com
 
 Use LaunchingView to show launch content while the app checks update, notice, and startup state.
 
+When a force update or terminating notice is required, LaunchingView keeps the user on a blocking screen instead of closing the app. The action button opens the configured URL, and the update state is checked again when the app becomes active.
+
 ## Setup View
 ### Sync Process
 ```swift
