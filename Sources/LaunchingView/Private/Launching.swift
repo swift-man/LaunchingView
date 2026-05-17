@@ -115,6 +115,7 @@ struct Launching: Reducer {
       let hasPendingFetch = state.hasPendingFetch
       state.hasPendingFetch = false
       state.appUpdateStatus = appVersionStatus
+      state.appUpdateFetchErrorAlert = nil
       
       switch appVersionStatus {
       case .valid:
@@ -196,6 +197,8 @@ struct Launching: Reducer {
         return .send(.fetchAppUpdateStatus)
       }
       
+      state.optionalUpdateAlert = nil
+      state.noticeAlert = nil
       state.appUpdateFetchErrorAlert = AlertState {
         TextState(Bundle.main.displayName)
       } message: {

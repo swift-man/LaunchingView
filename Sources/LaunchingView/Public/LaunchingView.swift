@@ -57,7 +57,7 @@ import SwiftUI
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 public struct LaunchingView<Content: View, LaunchScreen: View>: View {
-  @ObservedObject
+  @StateObject
   private var viewStore: ViewStore<Launching.State, Launching.Action>
   
   private let contentView: () -> Content
@@ -89,26 +89,15 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
     ) {
       Launching()
     }
-    self._viewStore = ObservedObject(wrappedValue: ViewStore(store, observe: { $0 }))
+    self._viewStore = StateObject(wrappedValue: ViewStore(store, observe: { $0 }))
   }
   
   public var body: some View {
-    let content = launchContent(viewStore: viewStore)
-    let sceneContent = AnyView(
-      content.onChange(of: scenePhase, perform: handleScenePhaseChange)
-    )
-    let optionalUpdateAlert = AnyView(sceneContent.alert(
-      optionalUpdateAlertBinding,
-      action: handleAlertAction
-    ))
-    let fetchErrorAlert = AnyView(optionalUpdateAlert.alert(
-      appUpdateFetchErrorAlertBinding,
-      action: handleAlertAction
-    ))
-    return AnyView(fetchErrorAlert.alert(
-      noticeAlertBinding,
-      action: handleAlertAction
-    ))
+    launchContent(viewStore: viewStore)
+      .onChange(of: scenePhase, perform: handleScenePhaseChange)
+      .alert(optionalUpdateAlertBinding, action: handleAlertAction)
+      .alert(appUpdateFetchErrorAlertBinding, action: handleAlertAction)
+      .alert(noticeAlertBinding, action: handleAlertAction)
   }
 
   private var optionalUpdateAlertBinding: Binding<AlertState<Launching.Action>?> {
@@ -132,21 +121,18 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
     )
   }
 
-  private func launchContent(viewStore: ViewStore<Launching.State, Launching.Action>) -> AnyView {
+  @ViewBuilder
+  private func launchContent(viewStore: ViewStore<Launching.State, Launching.Action>) -> some View {
     if let blockingAlert = viewStore.blockingAlert {
-      return AnyView(blockingLaunchView(blockingAlert, viewStore: viewStore))
-    }
-
-    if viewStore.displayContentView && isUserCustomFlagFinished {
-      return AnyView(contentView())
-    }
-
-    return AnyView(
+      blockingLaunchView(blockingAlert, viewStore: viewStore)
+    } else if viewStore.displayContentView && isUserCustomFlagFinished {
+      contentView()
+    } else {
       launchScreen()
         .onAppear {
           viewStore.send(.fetchAppUpdateStatus)
         }
-    )
+    }
   }
 
   private func blockingLaunchView(

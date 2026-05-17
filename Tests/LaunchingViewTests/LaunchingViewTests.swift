@@ -185,6 +185,32 @@ struct LaunchingViewTests {
   }
 
   @Test
+  func fetchErrorClearsOtherAlertStates() async {
+    let store = TestStore(
+      initialState: Launching.State(
+        optionalUpdateAlert: AlertState {
+          TextState("Optional update")
+        },
+        noticeAlert: AlertState {
+          TextState("Notice")
+        }
+      )
+    ) {
+      Launching()
+    }
+
+    await store.send(.showFetchErrorAlert(errorMessage: "Network failed")) {
+      $0.optionalUpdateAlert = nil
+      $0.noticeAlert = nil
+      $0.appUpdateFetchErrorAlert = AlertState {
+        TextState(Bundle.main.displayName)
+      } message: {
+        TextState("Network failed")
+      }
+    }
+  }
+
+  @Test
   func fetchWhileFetchingRefreshesAgainAfterCurrentStatusFinishes() async {
     let url = URL(string: "https://example.com/force")!
     let forceStatus = AppUpdateStatus.forcedUpdateRequired(
