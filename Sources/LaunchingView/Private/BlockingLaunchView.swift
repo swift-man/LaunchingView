@@ -40,7 +40,7 @@ struct BlockingLaunchView: View {
         }
       }
 
-      if linkURL != nil {
+      if let linkURL {
         Button {
           onButtonTapped(linkURL)
         } label: {
