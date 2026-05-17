@@ -10,7 +10,7 @@ import ComposableArchitecture
 import SwiftUI
 
 /// Launching은 App 구동을 위한 Request 를 포함한 AppUpdate 상태를 관리합니다.
-struct Launching: ReducerProtocol {
+struct Launching: Reducer {
   // MARK: - Enums
   struct State: Equatable {
     struct BlockingAlert: Equatable {
@@ -75,7 +75,7 @@ struct Launching: ReducerProtocol {
   @Dependency(\.openURL)
   var openURL
   
-  func reduce(into state: inout State, action: Action) -> EffectTask<Action> {
+  func reduce(into state: inout State, action: Action) -> Effect<Action> {
     switch action {
     case .fetchAppUpdateStatus:
       guard !state.isFetching else {
@@ -84,12 +84,13 @@ struct Launching: ReducerProtocol {
       }
       
       state.isFetching = true
-      return .task {
+      let launchingService = self.launchingService
+      return .run { send in
         do {
           let appStatus = try await launchingService.fetchAppUpdateStatus()
-          return .setAppUpdateStatus(appStatus)
+          await send(.setAppUpdateStatus(appStatus))
         } catch {
-          return .showFetchErrorAlert(errorMessage: error.localizedDescription)
+          await send(.showFetchErrorAlert(errorMessage: error.localizedDescription))
         }
       }
 
@@ -145,13 +146,18 @@ struct Launching: ReducerProtocol {
         state.displayContentView = true
         state.blockingAlert = nil
         state.noticeAlert = nil
-        state.optionalUpdateAlert = AlertState(
-          title: TextState(title),
-          message: TextState(message),
-          primaryButton: .cancel(TextState(launchingAlertDefaultText.optionalUpdate.cancel)),
-          secondaryButton: .default(TextState(launchingAlertDefaultText.optionalUpdate.done),
-                                    action: .send(.optionalUpdateAlertDoneTapped(appStoreURL: updateAlert.alertDoneLinkURL)))
-        )
+        state.optionalUpdateAlert = AlertState {
+          TextState(title)
+        } actions: {
+          ButtonState(role: .cancel) {
+            TextState(launchingAlertDefaultText.optionalUpdate.cancel)
+          }
+          ButtonState(action: .optionalUpdateAlertDoneTapped(appStoreURL: updateAlert.alertDoneLinkURL)) {
+            TextState(launchingAlertDefaultText.optionalUpdate.done)
+          }
+        } message: {
+          TextState(message)
+        }
         
         return fetchAgainIfNeeded(hasPendingFetch)
         
@@ -217,7 +223,7 @@ struct Launching: ReducerProtocol {
     }
   }
 
-  private func openExternalURL(_ url: URL?) -> EffectTask<Action> {
+  private func openExternalURL(_ url: URL?) -> Effect<Action> {
     guard let url else { return .none }
 
     let openURL = self.openURL
@@ -227,7 +233,7 @@ struct Launching: ReducerProtocol {
     }
   }
 
-  private func fetchAgainIfNeeded(_ hasPendingFetch: Bool) -> EffectTask<Action> {
+  private func fetchAgainIfNeeded(_ hasPendingFetch: Bool) -> Effect<Action> {
     hasPendingFetch ? .send(.fetchAppUpdateStatus) : .none
   }
 }

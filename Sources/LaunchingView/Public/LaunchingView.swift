@@ -57,7 +57,8 @@ import SwiftUI
 @available(tvOS, unavailable)
 @available(watchOS, unavailable)
 public struct LaunchingView<Content: View, LaunchScreen: View>: View {
-  private let store: StoreOf<Launching>
+  @ObservedObject
+  private var viewStore: ViewStore<Launching.State, Launching.Action>
   
   private let contentView: () -> Content
   private let launchScreen: () -> LaunchScreen
@@ -83,51 +84,93 @@ public struct LaunchingView<Content: View, LaunchScreen: View>: View {
     self.contentView = content
     self.launchScreen = launchScreen
     self._isUserCustomFlagFinished = isFinished
-    self.store = Store(
-      initialState: Launching.State(),
-      reducer: Launching()
-    )
+    let store = Store(
+      initialState: Launching.State()
+    ) {
+      Launching()
+    }
+    self._viewStore = ObservedObject(wrappedValue: ViewStore(store, observe: { $0 }))
   }
   
   public var body: some View {
-    WithViewStore(self.store, observe: { $0 }) { viewStore in
-      Group {
-        if let blockingAlert = viewStore.blockingAlert {
-          BlockingLaunchView(
-            title: blockingAlert.title,
-            message: blockingAlert.message,
-            buttonTitle: blockingAlert.buttonTitle,
-            linkURL: blockingAlert.linkURL,
-            onButtonTapped: { linkURL in
-              viewStore.send(.blockingAlertButtonTapped(linkURL: linkURL))
-            }
-          )
-        } else if viewStore.displayContentView && isUserCustomFlagFinished {
-          contentView()
-        } else {
-          launchScreen()
-            .onAppear {
-              viewStore.send(.fetchAppUpdateStatus)
-            }
-        }
-      }
-      .onChange(of: scenePhase) { newValue in
-        if newValue == .active {
+    let content = launchContent(viewStore: viewStore)
+    let sceneContent = AnyView(
+      content.onChange(of: scenePhase, perform: handleScenePhaseChange)
+    )
+    let optionalUpdateAlert = AnyView(sceneContent.alert(
+      optionalUpdateAlertBinding,
+      action: handleAlertAction
+    ))
+    let fetchErrorAlert = AnyView(optionalUpdateAlert.alert(
+      appUpdateFetchErrorAlertBinding,
+      action: handleAlertAction
+    ))
+    return AnyView(fetchErrorAlert.alert(
+      noticeAlertBinding,
+      action: handleAlertAction
+    ))
+  }
+
+  private var optionalUpdateAlertBinding: Binding<AlertState<Launching.Action>?> {
+    viewStore.binding(
+      get: { $0.optionalUpdateAlert },
+      send: .optionalUpdateAlertDismissed
+    )
+  }
+
+  private var appUpdateFetchErrorAlertBinding: Binding<AlertState<Launching.Action>?> {
+    viewStore.binding(
+      get: { $0.appUpdateFetchErrorAlert },
+      send: .appUpdateFetchErrorAlertDismissed
+    )
+  }
+
+  private var noticeAlertBinding: Binding<AlertState<Launching.Action>?> {
+    viewStore.binding(
+      get: { $0.noticeAlert },
+      send: .noticeAlertDismissed
+    )
+  }
+
+  private func launchContent(viewStore: ViewStore<Launching.State, Launching.Action>) -> AnyView {
+    if let blockingAlert = viewStore.blockingAlert {
+      return AnyView(blockingLaunchView(blockingAlert, viewStore: viewStore))
+    }
+
+    if viewStore.displayContentView && isUserCustomFlagFinished {
+      return AnyView(contentView())
+    }
+
+    return AnyView(
+      launchScreen()
+        .onAppear {
           viewStore.send(.fetchAppUpdateStatus)
         }
+    )
+  }
+
+  private func blockingLaunchView(
+    _ blockingAlert: Launching.State.BlockingAlert,
+    viewStore: ViewStore<Launching.State, Launching.Action>
+  ) -> BlockingLaunchView {
+    BlockingLaunchView(
+      title: blockingAlert.title,
+      message: blockingAlert.message,
+      buttonTitle: blockingAlert.buttonTitle,
+      linkURL: blockingAlert.linkURL,
+      onButtonTapped: { linkURL in
+        viewStore.send(.blockingAlertButtonTapped(linkURL: linkURL))
       }
-    }
-    .alert(
-      self.store.scope(state: \.optionalUpdateAlert),
-      dismiss: .optionalUpdateAlertDismissed
     )
-    .alert(
-      self.store.scope(state: \.appUpdateFetchErrorAlert),
-      dismiss: .appUpdateFetchErrorAlertDismissed
-    )
-    .alert(
-      self.store.scope(state: \.noticeAlert),
-      dismiss: .noticeAlertDismissed
-    )
+  }
+
+  private func handleScenePhaseChange(_ scenePhase: ScenePhase) {
+    guard scenePhase == .active else { return }
+    viewStore.send(.fetchAppUpdateStatus)
+  }
+
+  private func handleAlertAction(_ action: Launching.Action?) {
+    guard let action else { return }
+    viewStore.send(action)
   }
 }

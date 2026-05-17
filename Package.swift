@@ -15,8 +15,8 @@ let package = Package(
             targets: ["LaunchingView"]),
     ],
     dependencies: [
-      .package(url: "https://github.com/pointfreeco/swift-composable-architecture", from: "0.50.1"),
-      .package(url: "https://github.com/swift-man/LaunchingService", from: "0.9.0"),
+      .package(url: "https://github.com/pointfreeco/swift-composable-architecture", "1.23.2"..<"1.24.0"),
+      .package(url: "https://github.com/swift-man/LaunchingService", from: "0.9.2"),
     ],
     targets: [
         .target(

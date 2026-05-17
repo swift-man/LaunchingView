@@ -89,9 +89,10 @@ struct LaunchingViewTests {
             alertDoneLinkURL: stateURL
           )
         )
-      ),
-      reducer: Launching()
-    )
+      )
+    ) {
+      Launching()
+    }
     store.dependencies.openURL = OpenURLEffect { url in
       await recorder.open(url)
       return true
@@ -114,9 +115,10 @@ struct LaunchingViewTests {
     )
     let recorder = ExternalActionRecorder()
     let store = TestStore(
-      initialState: Launching.State(displayContentView: true),
-      reducer: Launching()
-    )
+      initialState: Launching.State(displayContentView: true)
+    ) {
+      Launching()
+    }
     store.dependencies.launchingAlertDefaultText = LaunchingAlertDefaultText(
       forceUpdate: .init(done: "Update")
     )
@@ -154,9 +156,10 @@ struct LaunchingViewTests {
     )
     let recorder = ExternalActionRecorder()
     let store = TestStore(
-      initialState: Launching.State(displayContentView: true),
-      reducer: Launching()
-    )
+      initialState: Launching.State(displayContentView: true)
+    ) {
+      Launching()
+    }
     store.dependencies.launchingAlertDefaultText = LaunchingAlertDefaultText(
       notice: .init(done: "Open")
     )
@@ -192,9 +195,10 @@ struct LaunchingViewTests {
       )
     )
     let store = TestStore(
-      initialState: Launching.State(isFetching: true),
-      reducer: Launching()
-    )
+      initialState: Launching.State(isFetching: true)
+    ) {
+      Launching()
+    }
     store.dependencies.launchingAlertDefaultText = LaunchingAlertDefaultText(
       forceUpdate: .init(done: "Update")
     )
